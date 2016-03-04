@@ -1,0 +1,25 @@
+<div ng-include="'nav.html'"></div>
+
+<div ng-controller="routines">
+    <div class="alert alert-danger" ng-if="error">
+        {{error | json}}
+    </div>
+    
+    <div class="row">
+        <div class="col-md-10">
+            <ol class="breadcrumb">
+                <li><a href="/">{{lng.home}}</a></li>
+                <li class="active">{{lng.routines}}</li>
+            </ol>
+        </div>
+        <div class="col-md-2">
+            <a href="/routines-add" style="margin-bottom: 10px" class="btn btn-primary btn-block pull-right">{{lng.add}}</a>
+        </div>
+    </div>
+    
+    <div ng-if="rotines.data.length <= 0 || rotines.data == undefined">
+        <div class="alert alert-warning">{{lng.norecords}}</div>
+    </div>
+    
+    
+</div>

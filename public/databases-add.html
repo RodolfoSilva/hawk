@@ -1,0 +1,90 @@
+<div ng-include="'nav.html'"></div>
+
+<div class="alert alert-danger" ng-if="error">
+    {{error | json}}
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li><a href="#">{{lng.home}}</a></li>
+            <li><a href="/databases">{{lng.databases}}</a></li>
+            <li class="active">{{lng.add}}</li>
+        </ol>
+    </div>
+</div>
+
+<form name="newDatabase" ng-submit="add()">
+    <div class="form-group">
+        <label for="namespace">{{lng.namespace}} *</label>
+        <input type="text" class="form-control" name="namespace" id="namespace" placeholder="mydatabase" ng-model="data.namespace" ng-minlength="3" ng-maxlength="12" required />
+    </div>
+    
+    <div class="form-group">
+        <label for="type">{{lng.type}} *</label>
+        <select type="text" class="form-control" name="filter" id="filter" ng-model="data.type" required>
+            <option value="mongodb">MongoDB</option>
+            <!--<option value="dynamodb">DynamoDB</option>-->
+        </select>
+    </div>
+    
+    <div ng-if="data.type == 'mongodb'">
+        <div class="form-group">
+            <label for="hostname">{{lng.hostname}} *</label>
+            <input type="text" class="form-control" name="hostname" id="hostname" placeholder="localhost" ng-model="data.hostname" required />
+        </div>
+
+        <div class="form-group">
+            <label for="port">{{lng.port}} *</label>
+            <input type="number" class="form-control" name="port" id="port" placeholder="27017" ng-model="data.port" required />
+        </div>
+
+        <div class="form-group">
+            <label for="database">{{lng.database}} *</label>
+            <input type="text" class="form-control" name="database" id="database" placeholder="databasename" ng-model="data.database" required />
+        </div>
+
+        <br/>
+        <h3>{{lng.authentication}}</h3>
+        <hr/>
+
+        <div class="form-group">
+            <label for="username">{{lng.username}}</label>
+            <input type="text" class="form-control" name="username" id="username" placeholder="username" ng-model="data.username" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">{{lng.password}}</label>
+            <input type="password" class="form-control" name="password" id="password" placeholder="password" ng-model="data.password" />
+        </div>
+    </div>
+    
+    <div ng-if="data.type == 'dynamodb'">
+        <div class="form-group">
+            <label for="awsaccesskey">AWS Access Key *</label>
+            <input type="text" class="form-control" name="awsaccesskey" id="awsaccesskey" placeholder="Access key" ng-model="data.awsaccesskey" required />
+        </div>
+        <div class="form-group">
+            <label for="awssecretkey">AWS Secrect Key *</label>
+            <input type="text" class="form-control" name="awssecretkey" id="awssecretkey" placeholder="Secret key" ng-model="data.awssecretkey" required />
+        </div>
+        <div class="form-group">
+            <label for="awsregion">Region *</label>
+            <select type="text" class="form-control" name="awsregion" id="awsregion" ng-model="data.awsregion" required>
+                <option value="us-east-1">US East (N. Virginia)</option>
+                <option value="us-west-1">US West (N. California)</option>
+                <option value="us-west-2">US West (Oregon)</option>
+                <option value="eu-west-1">EU (Ireland)</option>
+                <option value="eu-central-1">EU (Frankfurt)</option>
+                <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
+                <option value="ap-northeast-2">Asia Pacific (Seoul)</option>
+                <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
+                <option value="sa-east-1">South America (Sao Paulo)</option>
+            </select>
+        </div>
+    </div>
+            
+    <button class="btn btn-info" ng-disabled="newDatabase.$invalid" ng-click="testconnection(); $event.preventDefault();">{{lng.testconnection}}</button>
+    <button type="submit" ng-disabled="newDatabase.$invalid" class="btn btn-primary">{{lng.save}}</button>
+</form>

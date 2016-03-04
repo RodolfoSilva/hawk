@@ -1,0 +1,70 @@
+<div ng-include="'nav.html'"></div>
+
+<div ng-controller="updaters">
+    <div class="alert alert-danger" ng-if="error">
+        {{error | json}}
+    </div>
+    
+    <div class="row">
+        <div class="col-md-10">
+            <ol class="breadcrumb">
+                <li><a href="/">{{lng.home}}</a></li>
+                <li class="active">{{lng.updaters}}</li>
+            </ol>
+        </div>
+        <div class="col-md-2">
+            <a href="/updaters-add" style="margin-bottom: 10px" class="btn btn-primary btn-block pull-right">{{lng.add}}</a>
+        </div>
+    </div>
+    
+    <div ng-if="updaters.data.length <= 0">
+        <div class="alert alert-warning">{{lng.norecords}}</div>
+    </div>
+    
+    <table class="table table-bots" style="margin-top: 20px;" ng-if="updaters.data.length > 0">
+        <thead>
+            <tr>
+                <th style="width: 20%">{{lng.namespace}}</th>
+                <th>{{lng.progress}}</th>
+                <th style="width: 20px"></th>
+            </tr>
+        </thead>
+        
+        <tbody ng-repeat="updater in updaters.data">
+            <td>
+                <b><img src="http://www.google.com/s2/favicons?domain={{updater.filter.domain}}" alt="{{mapper.filter.namespace}} Favicon" style="width: 16px; height: 16px" /> {{updater.namespace}} </b>
+                <br/>PID: {{threads[updater._id].pid}}
+            </td>
+            <td>
+                <uib-progressbar class="progress-striped active" style="margin-bottom: 5px" value="threads[updater._id].stats.progress.perc"><b>{{threads[updater._id].stats.progress.perc}}%</b></uib-progressbar>
+                <table class="table table-not-bordered" style="margin-bottom:0px;">
+                    <tbody>
+                        <tr>
+                            <td>CPU</td>
+                            <td>
+                                <sparkline ng-model="sparkline[updater._id].cpu"></sparkline>
+                            </td>
+                            <td style="width:90px">{{threads[updater._id].stats.cpu | number : 1}}%</td>
+                            <td>Memória</td>
+                            <td>
+                                <sparkline ng-model="sparkline[updater._id].memory"></sparkline>
+                            </td>
+                            <td style="width:90px">{{threads[updater._id].stats.memory.heapTotal | bytes}}</td>
+                            <td>Rede</td>
+                            <td>
+                                <sparkline ng-model="sparkline[updater._id].network"></sparkline>
+                            </td>
+                            <td style="width:90px"><div ng-if="threads[updater._id].stats.networkusage > 0">{{threads[updater._id].stats.networkusage | bytes}}/s</div><div ng-if="threads[updater._id].stats.networkusage <= 0">-/s</div></td>
+                            
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+            <td>
+                <div ng-if="threads[updater._id].pid <= 0 || threads[updater._id].pid == undefined"><button class="btn btn-primary btn-xs" ng-click="start(updater._id)"><i class="fa fa-play"></i></button><br/><br/></div>
+                <div ng-if="threads[updater._id].pid > 0"><button class="btn btn-danger btn-xs" ng-click="stop(updater._id)" ><i class="fa fa-stop"></i></button><br/><br/></div>
+                <button class="btn btn-danger btn-xs" ng-click="remove(updater._id)"><i class="fa fa-times"></i></button>
+            </td>
+        </tbody>
+    </table>
+</div>

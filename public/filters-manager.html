@@ -1,0 +1,273 @@
+<div ng-include="'nav.html'"></div>
+
+<div ng-controller="filters-manager">
+    <div class="alert alert-danger" ng-if="error">
+        {{error | json}}
+    </div>    
+    <div class="row">
+        <div class="col-md-12">
+            <ol class="breadcrumb">
+                <li><a href="#">{{lng.home}}</a></li>
+                <li><a href="/filters">{{lng.filters}}</a></li>
+                <li class="active">{{lng.add}}</li>
+            </ol>
+        </div>
+    </div>
+    <form name="newfilter" ng-submit="enviar()">   
+        <div class="form-group">
+            <label for="namespace">{{lng.namespace}} *</label>
+            <input type="text" class="form-control" name="namespace" id="namespace" placeholder="myfilter" ng-model="data.namespace" ng-minlength="3" ng-maxlength="12" required />
+            <span class="help-block">{{lng.namespacelegend}}</span>
+        </div>
+        <div class="form-group">
+            <label for="domain">{{lng.domain}} *</label>
+            <input type="text" class="form-control" name="domain" id="domain" placeholder="website.com" ng-model="data.domain" required />
+            <span class="help-block">{{lng.domainlegend}}</span>
+        </div>
+        <div class="form-group">
+            <label for="charsetinput">{{lng.charsetinput}} *</label>
+            <input type="text" class="form-control" name="charsetinput" id="charsetinput" placeholder="utf-8" ng-model="data.charsetinput" required />
+            <span class="help-block">{{lng.charsetinputlegend}}</span>
+        </div>
+        <div class="form-group">
+            <label for="charsetoutput">{{lng.charsetoutput}} *</label>
+            <input type="text" class="form-control" name="charsetoutput" id="charsetinput" placeholder="utf-8" ng-model="data.charsetoutput" required />
+            <span class="help-block">{{lng.charsetoutputlegend}}</span>
+        </div>
+        <div class="form-group">
+            <label for="protocol">{{lng.protocol}}</label>
+            <select class="form-control" name="protocol" id="protocol" placeholder="htt" ng-model="data.protocol">
+                <option value="">HTTP</option>
+                <option value="https">HTTPS</option>
+            </select>
+            <span class="help-block">{{lng.protocollegend}}</span>
+        </div>
+        <!--<div class="form-group" ng-show="data.protocol== 'https'">
+            <label for="certificate">{{lng.certificate}} *</label>
+            <input type="file" class="form-control" ng-model="data.certificate" name="certificate" base-sixty-four-input />     
+            <span class="help-block">{{lng.certificatelegend}}</span>
+        </div>-->
+        
+        <br/>
+        
+        <h3>{{lng.filters}}</h3>
+        <hr/>
+        <div class="alert alert-info" role="alert" ng-bind-html="lng.filterlegend"></div>
+        <div class="form-group">
+            <label for="urlfilter">{{lng.urlfilter}}</label>
+            <input type="text" name="urlfilter" id="urlfilter" ng-model="data.urlfilter" data-role="tagsinput" />
+            <input type="checkbox" name="urlfilter-regex" ng-model="data.urlfilterregex" /> {{lng.regex}}
+            <span class="help-block" ng-bind-html="lng.urlfilterlegend"></span>
+        </div>
+        <hr/>
+        <div class="form-group">
+            <label for="urlpriority">{{lng.urlpriority}}</label>
+            <input type="text" name="urlpriority" id="urlpriority" ng-model="data.urlpriority" data-role="tagsinput" />
+            <input type="checkbox" name="urlpriority-regex" ng-model="data.urlpriorityregex" /> {{lng.regex}}
+            <span class="help-block">{{lng.urlprioritylegend}}</span>
+        </div>
+        <hr/>
+        <div class="form-group">
+            <label for="urlpriority">{{lng.urlignore}}</label>
+            <input type="text" name="urlignore" id="urlignore" ng-model="data.urlignore" data-role="tagsinput" />
+            <input type="checkbox" name="urlignore-regex" ng-model="data.urlignoreregex" /> {{lng.regex}}
+            <span class="help-block">{{lng.urlignorelegend}}</span>
+        </div>
+        <hr/>
+        <div class="form-group">
+            <label for="extrationfilter">{{lng.extrationfilter}}</label>
+            <input type="text" name="extrationfilter" id="extrationfilter" ng-model="data.extrationfilter" data-role="tagsinput" />
+            <input type="checkbox" name="extrationfilter-regex" ng-model="data.extrationfilterregex" /> {{lng.regex}}
+            <span class="help-block">{{lng.extrationfilterlegend}}</span>
+        </div>
+        
+        <hr/>
+        <div class="form-group">
+            <input type="checkbox" name="removesearch" ng-model="data.removesearch" /> {{lng.removesearch}}
+        </div>
+        <div class="form-group">
+            <label for="exceptionremovesearch">{{lng.exceptionremovesearch}}</label>
+            <input type="text" name="exceptionremovesearch" id="exceptionremovesearch" ng-model="data.exceptionremovesearch" data-role="tagsinput" />
+            <input type="checkbox" name="exceptionremovesearch-regex" ng-model="data.exceptionremovesearchregex" /> {{lng.regex}}
+            <span class="help-block">{{lng.exceptionremovesearchlegend}}</span>
+        </div>
+        
+        <br/>
+        <h3>{{lng.limiturl}}</h3>
+        <hr/>
+        <div class="form-group">
+            <label for="urlpatterns">{{lng.urlpatterns}}</label>
+            <input type="text" name="urlpatterns" id="urlpatterns" ng-model="data.urlpatterns" data-role="tagsinput" />
+            <input type="checkbox" name="urlpatterns-only" ng-model="data.urlpatternsonly" /> {{lng.urlpatternsonly}}
+            <span class="help-block" ng-bind-html="lng.urlpatternslegend"></span>
+        </div>
+        
+        <button class="btn btn-info" data-toggle="collapse" data-target="#listlinks" ng-click="$event.preventDefault()">{{lng.testlinksextract}}</button>
+        <br/><br/>
+        <div class="collapse" id="listlinks">
+            <table class="table table-bordered" style="word-wrap:break-word; table-layout: fixed;">
+                <thead>
+                    <tr>
+                        <th>Link</th>
+                        <th>{{lng.gotodatabase}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="link in test.links track by $index">
+                        <td>
+                            {{link}}
+                        </td>
+                        <td ng-bind-html="parselink(link)"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+                        
+        <br/>
+        <h3>{{lng.extraction}}</h3>
+        <hr/>
+        <div class="alert alert-info" role="alert" ng-bind-html="lng.extractionlegend"></div>
+
+        <table class="table table-bordered table-striped" ng-if="data.extracts" style="word-wrap:break-word; table-layout: fixed;">
+            <thead>
+                <tr>
+                    <th>{{lng.namespace}}</th>
+                    <th style="width: 100px">{{lng.actions}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="(key, extraction) in data.extracts">
+                    <td>{{extraction.namespace}}</td>
+                    <td>
+                        <button class="btn btn-success" uib-tooltip="{{lng.edit}}" ng-click="editExtraction(key); $event.preventDefault();"><i class="fa fa-pencil"></i></button>
+                        <button class="btn btn-danger" uib-tooltip="{{lng.remove}}" ng-click="removeExtraction(key); $event.preventDefault();"><i class="fa fa-times"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="input-group">
+            <input type="text" class="form-control" name="" placeholder="http://www.nytimes.com/" ng-model="url" />
+            <span class="input-group-btn">
+                <button class="btn btn-default btn-success" type="button" ng-click="changeurl()">{{lng.load}}</button>
+            </span>
+        </div>
+        
+        <!--<button class="btn btn-info btn-lg btn-block" onclick="toggleFullScreen()" style="margin-top: 20px;"><i class="fa fa-arrows-alt"></i> {{lng.fullscreen}}</button>-->
+        <iframe sandbox="allow-scripts allow-same-origin" src="{{browser.url}}" class="browser" id="browser"></iframe>
+                         
+        <button type="submit" ng-disabled="newfilter.$invalid" class="btn btn-primary">{{lng.save}}</button>
+    </form>
+</div>
+
+<!-- Modal New Extraction -->
+<div class="modal fade" tabindex="-1" role="dialog" id="newextraction" ng-controller="newextraction">
+    <div class="alert alert-danger" ng-if="error">
+        {{error | json}}
+    </div>
+    <form name="newExtraction" ng-submit="add()">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"><i class="fa fa-tags"></i> {{lng.newextraction}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newenamespace">{{lng.namespace}}*</label>
+                        <autocomplete name="newenamespace" id="newenamespace" ng-model="newe.namespace" data="autocomplete" required></autocomplete>
+                        <span class="help-block">{{lng.newenamespacelegend}}</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="newetype">{{lng.type}}</label>
+                        <select type="text" class="form-control" name="newetype" id="newetype" ng-model="newe.type" ng-change="refreshpreview()">
+                            <optgroup label="{{lng.standards}}">
+                                <option value="">{{lng.string}}</option>
+                                <option value="int">{{lng.integer}}</option>
+                                <option value="float">{{lng.float}}</option>
+                                <option value="date">{{lng.date}}</option>
+                                <option value="time">{{lng.time}}</option>
+                                <option value="datetime">{{lng.datetime}}</option>
+                            </optgroup>
+                            <optgroup label="{{lng.special}}">
+                                <option value="currency">{{lng.currency}}</option>
+                                <option value="img">{{lng.image}} (IMG {{lng.tagsonly}})</option>
+                                <option value="link">{{lng.link}} (A {{lng.tagsonly}})</option>
+                                <option value="table">{{lng.table}} (TABLE, DL and LI {{lng.tagsonly}})</option>
+                                <option value="imagegallery">{{lng.imagegallery}}</option>
+                                <option value="linklist">{{lng.linklist}}</option>
+                            </optgroup>
+                        </select>
+                        <span class="help-block">{{lng.newetypelegend}}</span>
+                    </div>
+                    <div class="form-group" ng-if="newe.type == 'link' || newe.type == 'linklist'">
+                        <input type="checkbox" name="newelinkremovequery" ng-model="newe.linkremovequery" ng-click="refreshpreview()" /> {{lng.newelinkremovequery}}
+                    </div>
+                    <div class="form-group" ng-if="newe.type == 'linklist'">
+                        <input type="checkbox" name="newelinkunique" ng-model="newe.linkunique" ng-click="refreshpreview()" /> {{lng.newelinkunique}}
+                    </div>
+                    
+                    <div class="form-group" ng-if="newe.type == 'datetime'">
+                        <label for="newedateformat">{{lng.dateformat}}</label>
+                        <select type="text" class="form-control" name="newedateformat" id="newedateformat" ng-model="newe.dateformat" ng-change="refreshpreview()">
+                            <option value="medium">{{datenow | date : 'medium'}}</option>
+                            <option value="short">{{datenow | date : 'short'}}</option>
+                            <option value="fullDate">{{datenow | date : 'fullDate'}}</option>
+                            <option value="longDate">{{datenow | date : 'longDate'}}</option>
+                            <option value="mediumDate">{{datenow | date : 'mediumDate'}}</option>
+                            <option value="shortDate">{{datenow | date : 'shortDate'}}</option>
+                            <option value="mediumTime">{{datenow | date : 'mediumTime'}}</option>
+                            <option value="shortTime">{{datenow | date : 'shortTime'}}</option>
+                        </select>
+                        <span class="help-block">{{lng.dateformatlegend}}</span>
+                    </div>
+                    
+                    <div class="form-group" ng-if="newe.type == 'currency'">
+                        <label for="currencyl10n">{{lng.currencyl10n}}*</label>
+                        <select type="text" class="form-control" name="currencyl10n" id="currencyl10n" ng-model="newe.currencyl10n" ng-change="refreshpreview()" required>
+                            <option value="en">English</option>
+                            <option value="en-gb">English United Kingdom</option>
+                            <option value="pt-br">Português Brasiliro</option>
+                        </select>
+                        <span class="help-block">{{lng.currencyl10nlegend}}</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="neweselector">{{lng.selector}}</label>
+                        <textarea type="text" class="form-control" name="neweselector" id="neweselector" ng-model="newe.query" rows="3" ng-change="refreshpreview()"></textarea>
+                        <span class="help-block" ng-bind-html="lng.newequerylegend"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="checkbox" name="newerequered" ng-model="newe.requered" ng-click="refreshpreview()" /> {{lng.newerequered}}
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" name="neweremovehtml" ng-model="newe.removehtml" ng-click="refreshpreview()" /> {{lng.neweremovehtml}}
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" name="htmlentitiesdecode" ng-model="newe.htmlentitiesdecode" ng-click="refreshpreview()" /> {{lng.newehtmlentities}}
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" name="removelinebreakandtabs" ng-model="newe.removelinebreakandtabs" ng-click="refreshpreview()" /> {{lng.removelinebreakandtabs}}
+                    </div>
+
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{lng.preview}}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="(key, value) in newe.preview">
+                                <td ng-if="newe.type != 'imagegallery' && newe.type != 'linklist' && newe.type != 'table'"><p style="text-overflow: ellipsis;">{{value}}</p></td>
+                                <td ng-if="newe.type == 'imagegallery' || newe.type == 'linklist' || newe.type == 'table'"><p style="width: 400px;"><pre>{{value | json}}</pre></p></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{lng.close}}</button>
+                    <button type="submit" class="btn btn-primary" ng-disabled="newExtraction.$invalid">{{lng.save}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

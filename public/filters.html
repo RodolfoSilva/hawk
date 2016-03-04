@@ -1,0 +1,79 @@
+<div ng-include="'nav.html'"></div>
+
+<div ng-controller="filters">
+    <div class="alert alert-danger" ng-if="error">
+        {{error | json}}
+    </div>
+    
+    <div class="row">
+        <div class="col-md-10">
+            <ol class="breadcrumb">
+                <li><a href="/">{{lng.home}}</a></li>
+                <li class="active">{{lng.filters}}</li>
+            </ol>
+        </div>
+        <div class="col-md-2">
+            <a href="/filters-add" style="margin-bottom: 10px" class="btn btn-primary btn-block pull-right">{{lng.add}}</a>
+        </div>
+    </div>
+    
+    <div ng-if="filters.length <= 0">
+        <div class="alert alert-warning">{{lng.norecords}}</div>
+    </div>
+    
+    <table class="table table-bordered table-striped" ng-if="filters">
+        <thead>
+            <tr>
+                <th>{{lng.namespace}} </th>
+                <th>{{lng.domain}} </th>
+                <th>{{lng.lastchange}}</th>
+                <th style="width: 142px">{{lng.actions}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="(key, filter) in filters">
+                <td>
+                    <img src="http://www.google.com/s2/favicons?domain={{filter.domain}}" alt="{{filter.namespace}} Favicon" style="width: 16px; height: 16px" class="favicon" /> {{filter.namespace}}
+                </td>
+                <td>
+                    {{filter.domain}}
+                </td>
+                <td>{{filter.mtime | date:lng.formatDatetime}}</td>
+                <td>
+                    <button ng-click="setfitler(filter.namespace); $event.preventDefault" type="button" class="btn btn-info" data-toggle="modal" data-target="#testfilter" uib-tooltip="{{lng.testfilter}}"><i class="fa fa-bug"></i></button>
+                    <a href="#/filters-edit/?path={{filter.path}}" class="btn btn-success" uib-tooltip="{{lng.edit}}"><i class="fa fa-pencil"></i></a>
+                    <button class="btn btn-danger" uib-tooltip="{{lng.remove}}" ng-click="remove()"><i class="fa fa-times"></i></button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="testfilter" ng-controller="testfilter">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title"><i class="fa fa-tags"></i> {{lng.testfilter}}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" ng-if="error">
+                    {{error | json}}
+                </div>
+                <div class="alert alert-info">
+                    {{lng.filtertestinfo}}
+                </div>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="" placeholder="http://www.nytimes.com/page/" ng-model="test.url" />
+                    <span class="input-group-btn">
+                        <button class="btn btn-default btn-success" type="button" ng-click="test()">{{lng.load}}</button>
+                    </span>
+                </div>
+                <br/>
+                <pre>
+                    {{test.data | json}}
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>

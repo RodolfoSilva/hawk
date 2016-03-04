@@ -1,0 +1,125 @@
+<div ng-include="'nav.html'"></div>
+
+<div ng-controller="mappers">
+    <div class="alert alert-danger" ng-if="error">
+        <button type="button" class="close" ng-click="error=''"><span>&times;</span></button>
+        {{error | json}}
+    </div>
+    
+    <div class="row">
+        <div class="col-md-10">
+            <ol class="breadcrumb">
+                <li><a href="/">{{lng.home}}</a></li>
+                <li class="active">{{lng.mapping}}</li>
+            </ol>
+        </div>
+        <div class="col-md-2">
+            <a href="/mappers-add" style="margin-bottom: 10px" class="btn btn-primary btn-block pull-right">{{lng.add}}</a>
+        </div>
+    </div>
+    <div>
+        <div ng-if="mappers.data.length <= 0">
+            <div class="alert alert-warning">{{lng.norecords}}</div>
+        </div>
+        <table class="table table-bots" style="margin-top: 20px;" ng-if="mappers.data.length > 0">
+            <thead>
+                <tr>
+                    <th style="width: 15%">{{lng.infor}}</th>
+                    <th>{{lng.statistics}}</th>
+                    <th style="width: 20px"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="mapper in mappers.data">
+                    <td>
+                        <b><img src="http://www.google.com/s2/favicons?domain={{mapper.filter.domain}}" alt="{{mapper.filter.namespace}} Favicon" style="width: 16px; height: 16px" /> {{mapper.namespace}} </b><br>
+                        <div ng-if="threads[mapper._id].pid > 0">
+                            PID: {{threads[mapper._id].pid}}<br>
+                            LA: {{threads[mapper._id].stats.lastactivity | date:"MM/dd h:mma"}}
+                        </div>
+                    </td>
+                    <td>                        
+                        <table class="table table-not-bordered" style="margin-bottom:0px;">
+                            <tbody>
+                                <tr>
+                                    <td>CPU</td>
+                                    <td style="width: 100px">
+                                        <sparkline ng-model="sparkline[mapper._id].cpu"></sparkline>
+                                    </td>
+                                    <td style="width:90px">{{threads[mapper._id].stats.cpu | number : 1}}%</td>
+
+                                    <td>Memória</td>
+                                    <td>
+                                        <sparkline ng-model="sparkline[mapper._id].memory"></sparkline>
+                                    </td>
+                                    <td style="width:90px">{{threads[mapper._id].stats.memory.heapTotal | bytes}}</td>
+ 
+                                    <td>Rede</td>
+                                    <td>
+                                        <sparkline ng-model="sparkline[mapper._id].network"></sparkline>
+                                    </td>
+                                    <td style="width:90px"><div ng-if="threads[mapper._id].stats.networkusage > 0">{{threads[mapper._id].stats.networkusage | bytes}}/s</div><div ng-if="threads[mapper._id].stats.networkusage <= 0">-/s</div></td>
+                                    <td>LPS</td>
+                                    <td>
+                                        <sparkline ng-model="sparkline[mapper._id].lps"></sparkline>
+                                    </td>
+                                    <td style="width:90px">{{threads[mapper._id].stats.linkPerSec}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    
+                        <table class="table table-not-bordered" style="margin-bottom:0px;">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 20px"><img src="img/table_multiple.png"></td>
+                                    <td style="width: 25%">{{threads[mapper._id].stats.progress.requests | number}} {{lng.requests}}</td>
+                                    <td style="width: 20px"><img src="img/link.png"></td>
+                                    <td style="width: 25%">{{threads[mapper._id].stats.progress.linkextraction | number}} {{lng.extractedlinks}}</td>
+                                    <td style="width: 20px"><img src="img/tick.png"></td>
+                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.verifications, 'links_'+mapper.namespace, {verified: true}); $event.preventDefault()">{{threads[mapper._id].stats.progress.verified | number}} {{lng.verifications}}</a> <button type="button" class="close" ng-click="clearCollection('links_'+mapper.namespace, {verified: true})"><span>&times;</span></button></td>
+                                    <td style="width: 20px"><img src="img/link_add.png"></td>
+                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.linkstoprocess, 'links_'+mapper.namespace, {queued: false, verified: false}); $event.preventDefault()">{{threads[mapper._id].stats.progress.linktoextract | number}} {{lng.linkstoprocess}}</a> <button type="button" class="close" ng-click="clearCollection('links_'+mapper.namespace, {verified: false})"><span>&times;</span></button></td>
+                                </tr>
+                                <tr>                                    
+                                    <td style="width: 20px"><img src="img/page_white_copy.png"></td>
+                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.extractions, 'extractions_'+mapper.namespace); $event.preventDefault()">{{threads[mapper._id].stats.progress.extractions | number}} {{lng.extractions}}</a> <button type="button" class="close" ng-click="clearCollection('extractions_'+mapper.namespace)"><span>&times;</span></button></td>
+                                    <td style="width: 20px"><img src="img/link_delete.png"></td>
+                                    <td style="width: 25%">{{(threads[mapper._id].stats.progress.ignoredlinks + threads[mapper._id].stats.progress.removeduplicate) | number}} {{lng.ignoredlinks}}</td>                        
+                                    <td style="width: 20px"><img src="img/page_white_error.png"></td>
+                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.errorsinextraction, 'links_'+mapper.namespace+'_logs'); $event.preventDefault()">{{threads[mapper._id].stats.progress.extractionerror}} {{lng.errorsinextraction}}</a> <button type="button" class="close" ng-click="clearCollection('links_'+mapper.namespace+'_logs')"><span>&times;</span></button></td>
+                                    <td style="width: 20px"><img src="img/link_break.png"></td>
+                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.errorsinlinks, 'extractions_'+mapper.namespace+'_logs'); $event.preventDefault()">{{threads[mapper._id].stats.progress.error | number}} {{lng.errorsinlinks}}</a> <button type="button" class="close" ng-click="clearCollection('extractions_'+mapper.namespace+'_logs')"><span>&times;</span></button></td> 
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                    <td>
+                        <div ng-if="threads[mapper._id].pid <= 0 || threads[mapper._id].pid == undefined"><button class="btn btn-primary btn-xs" ng-click="start(mapper._id)"><i class="fa fa-play"></i></button><br/><br/></div>
+                        <div ng-if="threads[mapper._id].pid > 0"><button class="btn btn-danger btn-xs" ng-click="stop(mapper._id)" ><i class="fa fa-stop"></i></button><br/><br/></div>
+                        <button class="btn btn-danger btn-xs" ng-click="remove(mapper._id)"><i class="fa fa-times"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="modal fade" tabindex="-1" role="dialog" id="showdatabase">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{showdatabasetitle}}</h4>
+                </div>
+                <div class="modal-body" >  
+                    <dir-pagination-controls max-size="15" style="float: right" on-page-change="pageChanged(newPageNumber)"></dir-pagination-controls>
+                    
+                    <div dir-paginate="(key, doc) in getdatabase.docs | itemsPerPage: 10" total-items="pagination.total" current-page="pagination.current">
+                        <textarea style="margin-bottom: 20px" rows="12" class="form-control" ng-if="key != 'total'">{{doc|json}}</textarea>
+                    </div>
+                    
+                    <dir-pagination-controls max-size="15" style="float: right" on-page-change="pageChanged(newPageNumber)"></dir-pagination-controls>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

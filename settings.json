@@ -1,0 +1,6 @@
+{
+    "port": 5800,
+    "session": "hawk",
+    "mongodb": "mongodb://localhost:27017/hawk",
+    "timezone": "America/Los_Angeles"
+}

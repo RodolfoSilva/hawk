@@ -1,0 +1,51 @@
+<div ng-include="'nav.html'"></div>
+
+<div ng-controller="databases">
+    <div class="alert alert-danger" ng-if="error">
+        {{error | json}}
+    </div>
+    <div class="row">
+        <div class="col-md-10">
+            <ol class="breadcrumb">
+                <li><a href="/">{{lng.home}}</a></li>
+                <li class="active">{{lng.databases}}</li>
+            </ol>
+        </div>
+        <div class="col-md-2">
+            <a href="/databases-add" style="margin-bottom: 10px" class="btn btn-primary btn-block pull-right">{{lng.add}}</a>
+        </div>
+    </div>
+    <div ng-if="databases.length <= 0">
+        <div class="alert alert-warning">{{lng.norecords}}</div>
+    </div>
+
+    <table class="table table-bordered table-striped" ng-if="databases.length > 0">
+        <thead>
+            <tr>
+                <th>{{lng.namespace}}</th>
+                <th>{{lng.type}}</th>
+                <th>{{lng.hostname}}</th>
+                <th style="width: 32px">{{lng.actions}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="(key, database) in databases">
+                <td>
+                    {{database.namespace}}
+                </td>
+                <td>
+                    {{database.type}}
+                </td>
+                <td ng-if="database.type == 'mongodb'">
+                    {{database.hostname}}:{{database.port}}
+                </td>
+                <td ng-if="database.type == 'dynamodb'">
+                    dynamodb.{{database.awsregion}}.amazonaws.com
+                </td>
+                <td>
+                    <button class="btn btn-danger" uib-tooltip="{{lng.remove}}" ng-click="remove(database._id)"><i class="fa fa-times"></i></button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

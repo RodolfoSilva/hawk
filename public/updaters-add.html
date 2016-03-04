@@ -1,0 +1,65 @@
+<div ng-include="'nav.html'"></div>
+
+<div class="alert alert-danger" ng-if="error">
+    {{error | json}}
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li><a href="#">{{lng.home}}</a></li>
+            <li><a href="/updaters">{{lng.updaters}}</a></li>
+            <li class="active">{{lng.add}}</li>
+        </ol>
+    </div>
+</div>
+
+<form name="newUpdater" ng-submit="add()">    
+    <div class="form-group">
+        <label for="namespace">{{lng.namespace}} *</label>
+        <input type="text" class="form-control" name="namespace" id="namespace" placeholder="mymapping" ng-model="data.namespace" ng-minlength="3" ng-maxlength="50" required />
+        <span class="help-block">{{lng.namespacemappinglegend}}</span>
+    </div>
+    
+    <div class="form-group">
+        <label for="filter">{{lng.filter}} *</label>
+        <select type="text" class="form-control" name="filter" id="filter" ng-model="data.filter" ng-change="getfilter()" ng-options="filter.name for filter in filters" required />
+        <span class="help-block">{{lng.filtermappinglegend}}</span>
+    </div>
+    
+    <table class="table table-bordered table-striped" ng-if="filter">
+        <thead>
+            <tr>
+                <th>{{lng.extraction}}</th>
+                <th>{{lng.update}}</th>
+                <th>{{lng.historic}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="item in filter.extracts">
+                <td>{{item.namespace}}</td>
+                <td><input type="checkbox" ng-model="data.extractions[item.namespace]['update']" /></td>
+                <td><input type="checkbox" ng-model="data.extractions[item.namespace]['historic']" /></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="form-group">
+        <label for="filter">{{lng.database}} *</label>
+        <select type="text" class="form-control" name="database" id="filter" ng-model="data.database" ng-options="database.namespace for database in databases" required />
+        <span class="help-block">{{lng.databaselegend}}</span>
+    </div>
+    
+    <div class="form-group">
+        <label for="database">{{lng.cpuusage}} *</label>
+        <div range-slider min="1" max="100" pin-handle="min" attach-handle-values="true" show-values="true" model-max="data.cpuusage"></div>
+    </div>
+    
+    <div class="alert alert-danger" ng-bind-html="lng.requestpersecoundalert"></div>
+    <div class="form-group">
+        <label for="database">{{lng.requestpersecound}} *</label>
+        <div range-slider min="1" max="100" pin-handle="min" attach-handle-values="true" show-values="true" model-max="data.requestpersecound"></div>
+    </div>
+    
+    <button type="submit" ng-disabled="newUpdater.$invalid" class="btn btn-primary">{{lng.save}}</button>
+</form>

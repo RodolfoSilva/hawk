@@ -1,0 +1,76 @@
+<div ng-include="'nav.html'"></div>
+
+<div class="alert alert-danger" ng-if="error">
+    {{error | json}}
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li><a href="#">{{lng.home}}</a></li>
+            <li><a href="/routines">{{lng.routines}}</a></li>
+            <li class="active">{{lng.add}}</li>
+        </ol>
+    </div>
+</div>
+
+<form name="newRotine" ng-submit="add()">    
+    <div class="form-group">
+        <label for="type">{{lng.type}} *</label>
+        <select class="form-control" id="type" name="type" ng-model="data.type" required>
+            <option value="mapper">{{lng.mapper}}</option>
+            <option value="updaters">{{lng.updaters}}</option>
+        </select>
+    </div>
+    
+    <div class="form-group" ng-if="data.type=='mapper'">
+        <label for="namespace">{{lng.mapper}} *</label>
+        <select class="form-control" id="namespace" name="namespace" ng-model="data.mapper" ng-options="mapper.namespace for mapper in mappers.data" required></select>
+    </div>
+    
+    <div class="form-group" ng-if="data.type=='updaters'">
+        <label for="namespace">{{lng.mapper}} *</label>
+        <select class="form-control" id="namespace" name="namespace" ng-model="data.mapper" ng-options="updater.namespace for updater in updaters.data" required></select>
+    </div>
+    
+    <div class="form-group">
+        <label for="interval">{{lng.interval}} *</label>
+        <select class="form-control" id="interval" name="interval" ng-model="data.interval" required>
+            <option value="monthly">{{lng.monthly}}</option>
+            <option value="weekly">{{lng.weekly}}</option>
+            <option value="daily">{{lng.daily}}</option>
+            <option value="onceperhour">{{lng.onceperhour}}</option>
+            <option value="minutes">{{lng.minutes}}</option>
+        </select>
+    </div>
+    
+    <div class="form-group" ng-if="data.interval=='monthly'">
+        <label for="day">{{lng.day}} *</label>
+        <input class="form-control" type="number" value="1" ng-minlength="1" ng-maxlength="28" id="day" name="day" ng-model="data.day" required />
+    </div>
+    
+    <div class="form-group" ng-if="data.interval=='weekly'">
+        <label for="weekly">{{lng.weekly}} *</label>
+        <select class="form-control" id="weekly" name="weekly" ng-model="data.weekly" required>
+            <option value="sunday">{{lng.sunday}}</option>
+            <option value="monday">{{lng.monday}}</option>
+            <option value="tuesday">{{lng.tuesday}}</option>
+            <option value="wednesday">{{lng.wednesday}}</option>
+            <option value="thursday">{{lng.thursday}}</option>
+            <option value="friday">{{lng.friday}}</option>
+            <option value="saturday">{{lng.saturday}}</option>
+        </select>
+    </div>
+    
+    <div class="form-group" ng-if="data.interval=='monthly' || data.interval=='weekly' || data.interval=='daily'">
+        <label for="time">{{lng.time}} *</label>
+        <input class="form-control" type="time" id="time" name="time" value="1" ng-model="data.time" required />
+    </div>
+    
+    <div class="form-group" ng-if="data.interval=='minutes'">
+        <label for="minutes">{{lng.minutes}} *</label>
+        <input class="form-control" type="number" id="minutes" name="minutes" ng-model="data.minutes" value="20" ng-minlength="1" ng-maxlength="59" required />
+    </div>
+        
+    <button type="submit" ng-disabled="newRotine.$invalid" class="btn btn-primary">{{lng.save}}</button>
+</form>
