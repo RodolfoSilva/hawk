@@ -550,7 +550,7 @@ var HawkMapper = {
                                             //global.gc();
                                         }
 
-                                        res.text.replace(/<a\s.*href=[\'"]?([^\'" >]+)/ig, function(){ 
+                                        res.text.replace(/<a\s.*?href=["\']([^"\']*)/img, function(){ 
                                             var bruteLink = arguments[1];
                                             bruteLinks.push(bruteLink);       
                                         });
