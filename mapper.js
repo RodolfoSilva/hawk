@@ -529,7 +529,8 @@ var HawkMapper = {
                                     progress++;
                                 
                                     if(res.status === 200){   
-                                        networkUsage += res.text.length;
+                                        var contents = res.body.toString();
+                                        networkUsage += contents.length;
                                         var protocol = (filter.protocol == undefined || filter.protocol == "undefined" || filter.protocol == "") ? "http" : filter.protocol;
                                         var absolteUrl = protocol+"://"+filter.domain;
 
@@ -537,7 +538,7 @@ var HawkMapper = {
 
                                         if(extractLink){
                                             //console.log("Extraindo: "+link);
-                                            var $ = cheerio.load(res.text);
+                                            var $ = cheerio.load(contents);
                                             var newextration = extractor($, filter, false);
 
                                             if(newextration != null){
@@ -550,7 +551,7 @@ var HawkMapper = {
                                             //global.gc();
                                         }
 
-                                        res.text.replace(/<a\s.*?href=["\']([^"\']*)/img, function(){ 
+                                        contents.replace(/<a\s.*?href=["\']([^"\']*)/img, function(){ 
                                             var bruteLink = arguments[1];
                                             bruteLinks.push(bruteLink);       
                                         });
