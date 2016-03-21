@@ -124,10 +124,11 @@ var DomInsp = {
 function DomInspCopyvalue(){
     var preview = [];
 
-    $(DomInspElement).each(function(){
+    $(DomInsp.elementpath(DomInspElement)).each(function(){
         switch($(this).prop('tagName')){
             case "A": preview.push($(this).html()); break;
             case "INPUT": preview.push($(this).val()); break;
+            case "IMG": value = $(this).attr("src"); break;
             default: preview.push($(this).html()); break;
         }
     });
@@ -136,54 +137,6 @@ function DomInspCopyvalue(){
         "action": "extract",
         "query": DomInsp.elementpath(DomInspElement),
         "type": "value",
-        "preview": preview
-    }, "*"); 
-
-    $(".DomInsp_dropMenu").css({"display": "none"});
-}
-
-function DomInspCopylink(){
-    var preview = [];
-
-    if($(DomInspElement).prop('tagName') == "A"){
-        $(DomInspElement).each(function(){
-            preview.push($(this).attr("href"));
-        });
-    }
-    else{
-        $("a", DomInspElement).each(function(){
-            preview.push($(this).attr("href"));
-        });
-    }
-
-    parent.postMessage({
-        "action": "extract",
-        "query": DomInsp.elementpath(DomInspElement),
-        "type": "link",
-        "preview": preview
-    }, "*"); 
-
-    $(".DomInsp_dropMenu").css({"display": "none"});
-}
-
-function DomInspCopyimg(){
-    var preview = [];
-    
-    if($(DomInspElement).prop('tagName') == "IMG"){
-        $(DomInspElement).each(function(){
-            preview.push($(this).attr("src"));
-        });
-    }
-    else{
-        $("img", DomInspElement).each(function(){
-            preview.push($(this).attr("src"));
-        });
-    }
-    
-    parent.postMessage({
-        "action": "extract",
-        "query": DomInsp.elementpath(DomInspElement),
-        "type": "img",
         "preview": preview
     }, "*"); 
 

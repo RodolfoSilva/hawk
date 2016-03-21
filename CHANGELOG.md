@@ -1,3 +1,8 @@
+2016.03.21 Version 0.8.4
+
+* Include JSON Viwer
+* Fix Mapper and Extractor
+
 2016.02.02 Version 0.8.3
 
 * Include CPU usage limit 

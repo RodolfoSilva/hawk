@@ -15,16 +15,21 @@ var fs = require("fs"),
     cheerio = require("cheerio"),
     php = require("phpjs"),
     _ = require("lodash"),
+    async = require("async"),
     exec = require('child_process').exec,
     extractor = require("./extractor.js");
     
-//process.on('uncaughtException', function(err){ console.log(err); });
+process.on('uncaughtException', function(err){ 
+    console.log(err); 
+    HawkUpdater.init();
+});
     
 var cpuusage = 0;
 var settings, filter = null;
 var stats = {
     extraction: 0,
     extractionerror: 0,
+    verified: 0
 };
 
 var arrLinkVerified = [];
@@ -77,7 +82,7 @@ var HawkUpdater = {
         //Incluindo URL semente no banco de dados
         HawkUpdater.infinity(function(){                
             var cpuusage = (typeof settings.cpuusage === "number") ? settings.cpuusage : 30;
-            HawkUpdater.db.collection("extractions_"+settings.namespace).update({}, {$set: {"queued_update": false, "verified_update": false, "queued_update_timeout": 0}});
+            //HawkUpdater.db.collection("extractions_"+settings.namespace).update({}, {$set: {"queued_update": false, "verified_update": false, "queued_update_timeout": 0}}, { multi: true });
             exec("cpulimit -p "+process.pid+" -l "+cpuusage);
             return "stop"; 
         }, 1000);
@@ -112,8 +117,8 @@ var HawkUpdater = {
                     HawkUpdater.db.collection("extractions_"+settings.namespace).count({$or: [{"queued_update": false, "verified_update": false}, {"queued_update": null, "verified_update": null}]}, function(error, numOfDocs){
                         stats.linktoextract = numOfDocs;
                         
-                        //if(stats.linktoextract == 0)
-                        //    HawkUpdater.end();
+                        //if(numOfDocs.length === 0)
+                        //    setTimeout(HawkUpdater.end, 60000);
                     });
                     
                     HawkUpdater.db.collection("extractions_"+settings.namespace).count({"verified_update": true}, function(error, numOfDocs){
@@ -153,7 +158,8 @@ var HawkUpdater = {
      * @return void
      */
     end: function(){
-        process.send({"type": "error", "msg": "Updater "+process.pid+": End rotine"});
+        console.log("Atualizador terminou!");
+        process.send({"type": "error", "msg": "Updater "+process.pid+": end rotine"});
         process.send({"type": "end"});
         setTimeout(function(){ process.exit(1); }, 3000);
     },
@@ -192,9 +198,9 @@ var HawkUpdater = {
      */
     checkTimeoutLinks: function(){
         var now = new Date().getTime();
-        HawkUpdater.db.collection("extractions_"+settings.namespace).count({queued_update: true, verified_update: false, queued_update_timeout: {$lt : now}},function(error, numOfDocs){
+        HawkUpdater.db.collection("extractions_"+settings.namespace).count({queued_update: true, verified_update: false, queued_update_timeout: {$or: [{$lt : now}, {$lt : null}]}},function(error, numOfDocs){
             if(numOfDocs > 0)
-                HawkUpdater.db.collection("extractions_"+settings.namespace).update({queued_update: true, verified_update: false, queued_update_timeout: {$lt : now}}, {$set: {queued_update: false}}, function(){});
+                HawkUpdater.db.collection("extractions_"+settings.namespace).update({queued_update: true, verified_update: false, queued_update_timeout: {$or: [{$lt : now}, {$lt : null}]}}, {$set: {queued_update: false}}, function(){});
         });
     },
     
@@ -221,105 +227,122 @@ var HawkUpdater = {
      * Solicita lote de links da base de dados
      * @return void
      */
-    getLinksLot: function(){        
-        //Enviando pacote de dados extraidos
-        if(arrExtractions.length > 0){
-            var bulk = HawkUpdater.db.collection("extractions_"+settings.namespace).initializeUnorderedBulkOp({useLegacyOps: true});
-            
-            (function(bulkExtractions){
-                var pointer = 0;
-                
-                for(var keyE in arrExtractions){
-                    (function(key){
-                        HawkUpdater.db.collection("extractions_"+settings.namespace).find({"_id": arrExtractions[key]["_id"]}).toArray(function(err, docs){
-                            for(var key2 in settings.extractions){
-                                var currentvalue = md5(JSON.stringify(docs[0][key2]));
-                                var newvalue = md5(JSON.stringify(arrExtractions[key][key2]));
-                                
-                                //Caso o registro atual não tenha historico
-                                if((docs[0][key2+"_historic"] === null || docs[0][key2+"_historic"] === undefined) && settings.extractions[key2]["historic"] === true){
-                                    var setHistoric = {};
-                                    setHistoric[key2+"_historic"] = {
-                                        value: docs[0][key2],
-                                        datetime: docs[0].createat
-                                    };
-
-                                    bulkExtractions.find({"_id": docs[0]["_id"]}).upsert().update({$addToSet:  setHistoric});
-                                }
-
-                                //Caso haja alteração
-                                if(currentvalue != newvalue){
-                                    console.log("Alterações no registro: "+arrExtractions[key]["_id"]);
-                                    var now = new Date().getTime();
-
-                                    if(settings.extractions[key2]["update"] === true){
-                                        var setObject = {};
-                                        setObject[key2] = arrExtractions[key][key2];
-                                        setObject["lastupdate"] = now;
-                                        bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).update({$set: setObject});
-                                    }
-                                    else{
-                                        bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).update({$set: {lastupdate: now}});
-                                    }
-
-                                    if(settings.extractions[key2]["historic"] === true){                       
-                                        var setHistoric = {};
-                                        setHistoric[key2+"_historic"] = {
-                                            value: arrExtractions[key][key2],
-                                            datetime: now
-                                        };
-
-                                        bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).upsert().update({
-                                            $addToSet:  setHistoric
-                                        });
-                                    }
-                                }
-                            }
-
-                            bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).update({$set: {"queued_update": true, "verified_update": true, "verified_datetime": now}});
-                            pointer++;
-
-                            if(pointer == arrExtractions.length){
-                                arrExtractions = [];
-                                console.log("Enviando pacote de alterações");
-                                bulkExtractions.execute(function(err, result) {});
-                                global.gc();
-                            }
-                        });
-                    })(keyE);
-                }                
-            })(bulk);
-        }        
-                        
-        global.gc();
+    getLinksLot: function(){   
+        HawkUpdater.inprogress = true;
         
-        switch(settings.database.type){
-           case "mongodb": 
-                HawkUpdater.db.collection("extractions_"+settings.namespace).find({$or: [{"queued_update": false, "verified_update": false}, {"queued_update": null, "verified_update": null}]}, {"_id": 1, "link": 1}, {limit: 100}).toArray(function(err, docs){
-                   var now = new Date().getTime();
-                   if(err){ 
-                       HawkUpdater.db.collection("extractions_"+settings.namespace+"_logs").insertOne({"datetime": now, "error": "MongoDB: "+ err});
-                       HawkUpdater.inprogress = false;
-                   }
-                   else{
-                        if(docs.length > 0){
-                            var now = new Date().getTime();
-                            var bulkQueued = HawkUpdater.db.collection("extractions_"+settings.namespace).initializeUnorderedBulkOp({useLegacyOps: true});
+        //Enviando pacote de dados extraidos
+        async.series([
+            function(next){                
+                if(arrExtractions.length > 0){
+                    arrExtractions = _.uniq(arrExtractions);
+                    var bulk = HawkUpdater.db.collection("extractions_"+settings.namespace).initializeUnorderedBulkOp();
 
-                            for(var key in docs)
-                                 bulkQueued.find({"_id": docs[key]["_id"]}).update({$set: {"queued_update": true, "queued_update_timeout": now}});
+                    (function(bulkExtractions){
+                        var pointer = 0;
 
-                            bulkQueued.execute(function(err, result) {});
-                            HawkUpdater.inprogress = true;
-                            HawkUpdater.requests(docs);
-                        }
-                        else{
-                            HawkUpdater.inprogress = false;
-                        }
-                   }
-                });
-           break;
-        }
+                        for(var keyE in arrExtractions){
+                            (function(key){
+                                HawkUpdater.db.collection("extractions_"+settings.namespace).find({"_id": arrExtractions[key]["_id"]}, {}, {limit: 1}).toArray(function(err, docs){
+                                    var hasChanges = false;
+                                    
+                                    for(var key2 in settings.extractions){
+                                        var currentvalue = md5(JSON.stringify(docs[0][key2]));
+                                        var newvalue = md5(JSON.stringify(arrExtractions[key][key2]));
+
+                                        //Caso o registro atual não tenha historico
+                                        if((docs[0][key2+"_historic"] === null || docs[0][key2+"_historic"] === undefined) && settings.extractions[key2]["historic"] === true){
+                                            var setHistoric = {};
+                                            setHistoric[key2+"_historic"] = {
+                                                value: docs[0][key2],
+                                                datetime: docs[0].createat
+                                            };
+
+                                            bulkExtractions.find({"_id": docs[0]["_id"]}).upsert().update({$addToSet:  setHistoric});
+                                        }
+
+                                        //Caso haja alteração
+                                        if(currentvalue != newvalue){
+                                            hasChanges = true;
+                                            var now = new Date().getTime();
+
+                                            if(settings.extractions[key2]["update"] === true){
+                                                var setObject = {};
+                                                setObject[key2] = arrExtractions[key][key2];
+                                                setObject["lastupdate"] = now;
+                                                bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).update({$set: setObject});
+                                            }
+                                            else{
+                                                bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).update({$set: {lastupdate: now}});
+                                            }
+
+                                            if(settings.extractions[key2]["historic"] === true){                       
+                                                var setHistoric = {};
+                                                setHistoric[key2+"_historic"] = {
+                                                    value: arrExtractions[key][key2],
+                                                    datetime: now
+                                                };
+
+                                                bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).upsert().update({
+                                                    $addToSet:  setHistoric
+                                                });
+                                            }
+                                        }
+                                    }
+                                    
+                                    if(hasChanges)
+                                        console.log("Alteração no registro: "+docs[0]["_id"]);
+
+                                    bulkExtractions.find({"_id": arrExtractions[key]["_id"]}).update({$set: {"queued_update": true, "verified_update": true, "verified_datetime": now}});
+                                    pointer++;
+
+                                    if(pointer == arrExtractions.length){
+                                        arrExtractions = [];
+                                        //console.log("Enviando pacote de alterações");
+                                        bulkExtractions.execute(function(err, result) { next(); });
+                                        global.gc();
+                                    }
+                                });
+                            })(keyE);
+                        }                
+                    })(bulk);
+                }    
+                else{
+                    next();
+                }
+            }
+        ], function(){
+            global.gc();
+        
+            switch(settings.database.type){
+               case "mongodb": 
+                    HawkUpdater.db.collection("extractions_"+settings.namespace).find({$or: [{"queued_update": false, "verified_update": false}, {"queued_update": null, "verified_update": null}]}, {"_id": 1, "link": 1}, {limit: 100}).toArray(function(err, docs){
+                       var now = new Date().getTime();
+                       if(err){ 
+                           HawkUpdater.db.collection("extractions_"+settings.namespace+"_logs").insertOne({"datetime": now, "error": "MongoDB: "+ err});
+                           HawkUpdater.inprogress = false;
+                       }
+                       else{
+                            if(docs.length > 0){
+                                var now = new Date().getTime();
+                                var bulkQueued = HawkUpdater.db.collection("extractions_"+settings.namespace).initializeUnorderedBulkOp();
+
+                                for(var key in docs)
+                                     bulkQueued.find({"_id": docs[key]["_id"]}).update({$set: {"queued_update": true, "queued_update_timeout": now+500000}});
+
+                                bulkQueued.execute(function(err, result) {});
+                                HawkUpdater.inprogress = true;
+                                HawkUpdater.requests(docs);
+                            }
+                            else{
+                                HawkUpdater.inprogress = false;
+                                setTimeout(HawkUpdater.end, 60000);
+                            }
+                       }
+                    });
+               break;
+            }
+        });            
+        
     },
                 
     /**

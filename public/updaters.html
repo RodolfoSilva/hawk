@@ -63,7 +63,7 @@
             <td>
                 <div ng-if="threads[updater._id].pid <= 0 || threads[updater._id].pid == undefined"><button class="btn btn-primary btn-xs" ng-click="start(updater._id)"><i class="fa fa-play"></i></button><br/><br/></div>
                 <div ng-if="threads[updater._id].pid > 0"><button class="btn btn-danger btn-xs" ng-click="stop(updater._id)" ><i class="fa fa-stop"></i></button><br/><br/></div>
-                <button class="btn btn-danger btn-xs" ng-click="remove(updater._id)"><i class="fa fa-times"></i></button>
+                <button class="btn btn-danger btn-xs" ng-click="remove(updater._id)" ng-disabled="threads[updater._id].pid > 0"><i class="fa fa-times"></i></button>
             </td>
         </tbody>
     </table>

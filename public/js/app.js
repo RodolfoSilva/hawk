@@ -3,8 +3,8 @@
  */
 'use strict';
 
-define(['angularAMD', 'angular-routes', "angular-sparklines", "angular-sanitize", "angular-resource",'angular-ngprogress', 'angular-base64-upload', 'angular-rangerslider', "angular-dirpagination", "angular-autocomplete", "ui-bootstrap", "bootstrap-taginput", "angular-bootstrap-taginput", "angular-cookies"], function (angularAMD) {
-    var app = angular.module("hawk", ["ng", "ngRoute", "ngProgress", "ngCookies", "ngSanitize", "ngResource", "naif.base64", "ui.bootstrap", "bootstrap-tagsinput", "ui-rangeSlider", "sparklines", "autocomplete", "angularUtils.directives.dirPagination"]);
+define(['angularAMD', 'angular-routes', "angular-sparklines", "angular-sanitize", "angular-resource",'angular-ngprogress', 'angular-base64-upload', 'angular-rangerslider', "angular-dirpagination", "angular-autocomplete", "ui-bootstrap", "bootstrap-taginput", "angular-bootstrap-taginput", "angular-cookies", "angular-json-explorer"], function (angularAMD) {
+    var app = angular.module("hawk", ["ng", "ngRoute", "ngProgress", "ngCookies", "ngSanitize", "ngResource", "naif.base64", "ui.bootstrap", "bootstrap-tagsinput", "ui-rangeSlider", "sparklines", "autocomplete", "angularUtils.directives.dirPagination", "ngJsonExplorer"]);
     
     app.config(function ($routeProvider) {
         $routeProvider

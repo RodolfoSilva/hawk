@@ -17,6 +17,7 @@ module.exports = function($, filter, debug){
         var namespace = parse_key(filter.extracts[key].namespace);
         var requered = filter.extracts[key].requered | false;
         var removehtml = filter.extracts[key].removehtml | false;
+        var firstelement = filter.extracts[key].firstelement | false;
         var converthtmlentitiesdecode = filter.extracts[key].htmlentitiesdecode | false;
         var removelinebreakandtabs = filter.extracts[key].removelinebreakandtabs | false;
         extraction[namespace] = [];
@@ -38,47 +39,80 @@ module.exports = function($, filter, debug){
                     default: value =  $(this).html(); break;
                 }
      
-                if(value != undefined && value != null && value != NaN){                    
-                    switch(filter.extracts[key].type){
-                        case "int":                                                             
-                            value.replace(/(\d{1,})/i, function(){ 
-                                value = parseInt(arguments[1]); 
-                            });
-                        break;
-                        case "float":                            
-                            value.replace(/(\d{1,}.\d{1,})/i, function(){ 
-                                value = parseFloat(arguments[1]); 
-                            });
-                        break;
-                        case "date": value = new Date(value).toDateString(); break;
-                        case "time": value = new Date(value).toTimeString(); break;
-                        case "datetime": value = new Date(value).toGMTString(); break;
-                        case "table": value = maptable(value); break;
-                        case "img": value = getattr(value, "src"); break;
-                        case "imagegallery": value = mapimages(value); break;
-                        case "currency": 
-                            value = value.replace(/(,|\.)+/gmi, "");//Removendo . e ,
-                            value.replace(/(\d{1,})/i, function(){  
-                                value = arguments[1];
-                                value = (value.substring(0, value.length-2) + "." + value.substring(value.length-2, value.length));
-                                value = parseFloat(value);
-                            });
-                            
-                            if(isNaN(value))
-                                value = null;
-                        break;   
-                        case "linklist": 
-                            value = maplinks(value, filter.extracts[key].linkremovequery); 
+                if(value != undefined && value != null && value != NaN){     
+                    if(typeof filter.extracts[key].maskregex == "string" && filter.extracts[key].maskregex != "" && filter.extracts[key].maskregex != null){
+                        var reg = new RegExp(filter.extracts[key].maskregex, "gmi");
 
-                             if(filter.extracts[key].linkunique && (typeof value == "object" || typeof value == "array"))
-                                 value = array_unique(value);                        
-                        break;
-                        case "link":
-                            if(filter.extracts[key].linkremovequery){
-                                var parse = value.split("?");
-                                value = parse[0];
+                        if(typeof value == "string"){
+                            m = value.match(reg);
+                            value = m;
+                        }
+                        else if(typeof value == "array" || typeof value == "object"){
+                            for(var key2 in value){
+                                if(typeof value[key2] == "string"){
+                                    m = value[key2].match(reg);
+                                    value[key2] =  m;
+                                }
+                                else{
+                                    for(var key3 in value[key2]){
+                                        if(typeof value[key2][key3] == "string"){
+                                            m = value[key2][key3].match(reg);
+                                            value[key2][key3] = m;
+                                        }
+                                    }
+                                }
                             }
-                        break;
+                        }
+                    }  
+                    
+                    if(value !== null && value !== undefined){
+                        switch(filter.extracts[key].type){
+                            case "int":    
+                                if(typeof value === "object" || typeof value === "array")
+                                    value = value[0];
+
+                                value.replace(/(\d{1,})/i, function(){ 
+                                    value = parseInt(arguments[1]); 
+                                });
+                            break;
+                            case "float":
+                                if(typeof value === "object" || typeof value === "array")
+                                    value = value[0];
+
+                                value.replace(/(\d{1,}.\d{1,})/i, function(){ 
+                                    value = parseFloat(arguments[1]); 
+                                });
+                            break;
+                            case "date": value = new Date(value).toDateString(); break;
+                            case "time": value = new Date(value).toTimeString(); break;
+                            case "datetime": value = new Date(value).toGMTString(); break;
+                            case "table": value = maptable(value); break;
+                            case "img": value = getattr(value, "src"); break;
+                            case "imagegallery": value = mapimages(value); break;
+                            case "currency": 
+                                value = value.replace(/(,|\.)+/gmi, "");//Removendo . e ,
+                                value.replace(/(\d{1,})/i, function(){  
+                                    value = arguments[1];
+                                    value = (value.substring(0, value.length-2) + "." + value.substring(value.length-2, value.length));
+                                    value = parseFloat(value);
+                                });
+
+                                if(isNaN(value))
+                                    value = null;
+                            break;   
+                            case "linklist": 
+                                value = maplinks(value, filter.extracts[key].linkremovequery); 
+
+                                 if(filter.extracts[key].linkunique && (typeof value == "object" || typeof value == "array"))
+                                     value = array_unique(value);                        
+                            break;
+                            case "link":
+                                if(filter.extracts[key].linkremovequery){
+                                    var parse = value.split("?");
+                                    value = parse[0];
+                                }
+                            break;
+                        }
                     }
                     
                     var m2 = php.microtime(true);
@@ -100,7 +134,7 @@ module.exports = function($, filter, debug){
                             return v.replace(/(\r\n|\n|\r|\t)/gm, "");
                         });
                     }
-
+                    
                     //Correção de trim
                     value = replaceInReturn(value, function(v){
                         return v.replace(/ +(?= )/g,'');
@@ -111,7 +145,8 @@ module.exports = function($, filter, debug){
                     debug_log[namespace] = {e: m2-m1, f: m3-m2, t: m3-m1}
 
                     if((typeof value === "object" || typeof value === "number" || typeof value === "string") && value !== null && value !== undefined)
-                        extraction[namespace].push(value);
+                        if(!firstelement || (extraction[namespace].length <= 0 && firstelement))
+                            extraction[namespace].push(value);
                 }
             });
         })(key);
@@ -164,7 +199,8 @@ function replaceInReturn(value, cb){
 }
 
 function getattr(html, atribute){
-    return $(html).attr(atribute);
+    var $ = cheerio.load(html);
+    return $("*").attr(atribute);
 }
 
 function maptable(html){
@@ -189,11 +225,13 @@ function maptable(html){
         r[key] = value;
         count++;
     });
+    
+    //console.log($(html).find("dt").length);
        
-    $(html).find("dl").each(function(){
+    //$(html).find("dl").each(function(){
         var value = [];
          
-        if($("dt", this).length <= 1){
+        /*if($("dt", this).length <= 1){
             var key = ($("dt", this).length > 0) ? $("dt", this).html().trim() : count;
 
             if(typeof key === "string")
@@ -207,24 +245,24 @@ function maptable(html){
             
             r[parse_key(key)] = value;
         } 
-        else if($("dt", this).length > 1){//Casos que o programador cotoco colocou vários DT no mesmo DL
+        else if($("dt", this).length > 1){//Casos que o programador cotoco colocou vários DT no mesmo DL*/
             var keys = [];
             var values = [];
             
-            $("dt", this).each(function(){
+            $("dt", html).each(function(){
                 keys.push($(this).html().trim());
             });
             
-            $("dd", this).each(function(){
+            $("dd", html).each(function(){
                 values.push($(this).html().trim());
             });
-                       
+                                   
             for(var key in keys)
                 r[parse_key(keys[key])] = values[key];        
-        }
+        //}
                 
         count++;
-    });
+    //});
     
     return r;
 }
@@ -234,7 +272,10 @@ function mapimages(html){
           
     var $ = cheerio.load(html);
     $("img").each(function(){
-        r.push($(this).attr("src"));
+        var src = $(this).attr("src");
+        
+        if(src != null && src != undefined)
+            r.push(src);
     });
     
     return r;
@@ -252,7 +293,8 @@ function maplinks(html, linkremovequery){
             href = parse[0];
         }
         
-        r.push(href);
+        if(href != null && href != undefined)
+            r.push(href);
     });
     
     return r;

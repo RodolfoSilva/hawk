@@ -138,5 +138,9 @@
     "thursday": "Quinta-feira",
     "friday": "Sexta-feira",
     "saturday": "Sábado",
+    "firstelement": "Desejo apena o primeiro elemento",
+    "maskregex": "Márcara (Regex)",
+    "maskregexlegend": "A marcara irá filtrar o retorno desejado, necessário uso de expressão regular",
+    "sitemaplegend": "Informe os arquivos de sitemap do website para otimizar o mapeamento",
     "formatDatetime": "dd/MM/yyyy h:mm:ss"
 }

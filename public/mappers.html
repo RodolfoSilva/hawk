@@ -43,27 +43,23 @@
                             <tbody>
                                 <tr>
                                     <td>CPU</td>
-                                    <td style="width: 100px">
+                                    <td>
                                         <sparkline ng-model="sparkline[mapper._id].cpu"></sparkline>
                                     </td>
-                                    <td style="width:90px">{{threads[mapper._id].stats.cpu | number : 1}}%</td>
+                                    <td style="width:110px">{{threads[mapper._id].stats.cpu | number : 1}}%</td>
 
                                     <td>Memória</td>
                                     <td>
                                         <sparkline ng-model="sparkline[mapper._id].memory"></sparkline>
                                     </td>
-                                    <td style="width:90px">{{threads[mapper._id].stats.memory.heapTotal | bytes}}</td>
+                                    <td style="width:110px">{{threads[mapper._id].stats.memory.heapTotal | bytes}}</td>
  
                                     <td>Rede</td>
                                     <td>
                                         <sparkline ng-model="sparkline[mapper._id].network"></sparkline>
                                     </td>
-                                    <td style="width:90px"><div ng-if="threads[mapper._id].stats.networkusage > 0">{{threads[mapper._id].stats.networkusage | bytes}}/s</div><div ng-if="threads[mapper._id].stats.networkusage <= 0">-/s</div></td>
-                                    <td>LPS</td>
-                                    <td>
-                                        <sparkline ng-model="sparkline[mapper._id].lps"></sparkline>
-                                    </td>
-                                    <td style="width:90px">{{threads[mapper._id].stats.linkPerSec}}</td>
+                                    <td style="width:110px"><div ng-if="threads[mapper._id].stats.networkusage > 0">{{threads[mapper._id].stats.networkusage | bytes}}/s</div><div ng-if="threads[mapper._id].stats.networkusage <= 0">-/s</div></td>
+                                    
                                 </tr>
                             </tbody>
                         </table>
@@ -86,9 +82,9 @@
                                     <td style="width: 20px"><img src="img/link_delete.png"></td>
                                     <td style="width: 25%">{{(threads[mapper._id].stats.progress.ignoredlinks + threads[mapper._id].stats.progress.removeduplicate) | number}} {{lng.ignoredlinks}}</td>                        
                                     <td style="width: 20px"><img src="img/page_white_error.png"></td>
-                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.errorsinextraction, 'links_'+mapper.namespace+'_logs'); $event.preventDefault()">{{threads[mapper._id].stats.progress.extractionerror}} {{lng.errorsinextraction}}</a> <button type="button" class="close" ng-click="clearCollection('links_'+mapper.namespace+'_logs')"><span>&times;</span></button></td>
+                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.errorsinextraction, 'extractions_'+mapper.namespace+'_logs'); $event.preventDefault()">{{threads[mapper._id].stats.progress.extractionerror}} {{lng.errorsinextraction}}</a> <button type="button" class="close" ng-click="clearCollection('extractions_'+mapper.namespace+'_logs')"><span>&times;</span></button></td>
                                     <td style="width: 20px"><img src="img/link_break.png"></td>
-                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.errorsinlinks, 'extractions_'+mapper.namespace+'_logs'); $event.preventDefault()">{{threads[mapper._id].stats.progress.error | number}} {{lng.errorsinlinks}}</a> <button type="button" class="close" ng-click="clearCollection('extractions_'+mapper.namespace+'_logs')"><span>&times;</span></button></td> 
+                                    <td style="width: 25%"><a href="#" ng-click="showdatabase(lng.errorsinlinks, 'links_'+mapper.namespace+'_logs'); $event.preventDefault()">{{threads[mapper._id].stats.progress.error | number}} {{lng.errorsinlinks}}</a> <button type="button" class="close" ng-click="clearCollection('links_'+mapper.namespace+'_logs')"><span>&times;</span></button></td> 
                                 </tr>
                             </tbody>
                         </table>
@@ -96,7 +92,7 @@
                     <td>
                         <div ng-if="threads[mapper._id].pid <= 0 || threads[mapper._id].pid == undefined"><button class="btn btn-primary btn-xs" ng-click="start(mapper._id)"><i class="fa fa-play"></i></button><br/><br/></div>
                         <div ng-if="threads[mapper._id].pid > 0"><button class="btn btn-danger btn-xs" ng-click="stop(mapper._id)" ><i class="fa fa-stop"></i></button><br/><br/></div>
-                        <button class="btn btn-danger btn-xs" ng-click="remove(mapper._id)"><i class="fa fa-times"></i></button>
+                        <button class="btn btn-danger btn-xs" ng-click="remove(mapper._id)" ng-disabled="threads[mapper._id].pid > 0"><i class="fa fa-times"></i></button>
                     </td>
                 </tr>
             </tbody>
@@ -110,14 +106,14 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title">{{showdatabasetitle}}</h4>
                 </div>
-                <div class="modal-body" >  
-                    <dir-pagination-controls max-size="15" style="float: right" on-page-change="pageChanged(newPageNumber)"></dir-pagination-controls>
+                <div class="modal-body" style="overflow: hidden; margin: auto; clear: both">  
+                    <dir-pagination-controls class="pull-right" max-size="15" on-page-change="pageChanged(newPageNumber)"></dir-pagination-controls>
                     
                     <div dir-paginate="(key, doc) in getdatabase.docs | itemsPerPage: 10" total-items="pagination.total" current-page="pagination.current">
-                        <textarea style="margin-bottom: 20px" rows="12" class="form-control" ng-if="key != 'total'">{{doc|json}}</textarea>
+                        <json-explorer data="doc" class="JSONViewBox"></json-explorer>
                     </div>
                     
-                    <dir-pagination-controls max-size="15" style="float: right" on-page-change="pageChanged(newPageNumber)"></dir-pagination-controls>
+                    <dir-pagination-controls class="pull-right" max-size="15" on-page-change="pageChanged(newPageNumber)"></dir-pagination-controls>
                 </div>
             </div>
         </div>

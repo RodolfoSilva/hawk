@@ -23,7 +23,8 @@ require.config({
         "bootstrap-taginput": "plugins/bootstrap-tagsinput.min", 
         "angular-bootstrap-taginput": "plugins/bootstrap-tagsinput-angular.min",
         "d3": "plugins/d3.min",
-        "socket.io": "../socket.io/socket.io"
+        "socket.io": "../socket.io/socket.io",
+        "angular-json-explorer": "plugins/angular/angular-json-explorer.min",
     },
     shim:{
         "angular":{exports:"angular"},
@@ -42,7 +43,8 @@ require.config({
         "ui-bootstrap": ["angular"],
         "bootstrap-taginput": ["jquery"],
         "angular-bootstrap-taginput": ["angular"],
-        'socket.io': {exports: 'io'}
+        'socket.io': {exports: 'io'},
+        "angular-json-explorer": ["angular"],
     },
     priority:[
         "angular"

@@ -140,5 +140,9 @@
     "thursday": "Thursday",
     "friday": "Friday",
     "saturday": "Saturday",
+    "firstelement": "I wish only the first element",
+    "maskregex": "Mask (Regex)",
+    "maskregexlegend": "The mask will filter the desired return, required use of regular expression",
+    "sitemaplegend": "Enter the website sitemap files to optimize the mapping",
     "formatDatetime": "MM/dd/yyyy h:mma"
 }

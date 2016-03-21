@@ -105,6 +105,13 @@
         <button class="btn btn-info" data-toggle="collapse" data-target="#listlinks" ng-click="$event.preventDefault()">{{lng.testlinksextract}}</button>
         <br/><br/>
         <div class="collapse" id="listlinks">
+            <div class="input-group">
+                <input type="text" class="form-control" ng-model="testlinkurl" />
+                <span class="input-group-btn">
+                    <button class="btn btn-default btn-success" type="button" ng-click="testlinks(testlinkurl)">{{lng.load}}</button>
+                </span>
+            </div>
+            <br/>
             <table class="table table-bordered" style="word-wrap:break-word; table-layout: fixed;">
                 <thead>
                     <tr>
@@ -230,6 +237,13 @@
                         </select>
                         <span class="help-block">{{lng.currencyl10nlegend}}</span>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="maskregex">{{lng.maskregex}}</label>
+                        <input type="text" class="form-control" name="maskregex" id="maskregex" ng-model="newe.maskregex" ng-change="refreshpreview()" />
+                        <span class="help-block" ng-bind-html="lng.maskregexlegend"></span>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="neweselector">{{lng.selector}}</label>
                         <textarea type="text" class="form-control" name="neweselector" id="neweselector" ng-model="newe.query" rows="3" ng-change="refreshpreview()"></textarea>
@@ -247,6 +261,9 @@
                     </div>
                     <div class="form-group">
                         <input type="checkbox" name="removelinebreakandtabs" ng-model="newe.removelinebreakandtabs" ng-click="refreshpreview()" /> {{lng.removelinebreakandtabs}}
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" name="firstelement" ng-model="newe.firstelement" ng-click="refreshpreview()" /> {{lng.firstelement}}
                     </div>
 
                     <table class="table table-bordered table-striped">

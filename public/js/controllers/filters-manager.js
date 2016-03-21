@@ -7,6 +7,7 @@
 define(['app', 'jquery', 'bootstrap'], function (app) {
     app.controller("filters-manager", function($scope, $rootScope, $http, $location, ngProgressFactory){
         $scope.progressbar = ngProgressFactory.createInstance();
+        $rootScope.test = {links: []};
 
         $rootScope.data = {
             urlfilter: "",
@@ -19,7 +20,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
         if(query.path != "" && query.path != undefined){
             var time = new Date().getTime();
             $scope.progressbar.start();
-
+            
             $http({
                 method: "GET",
                 url: "data-filter?path="+query.path+"&"+time,
@@ -36,20 +37,8 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
 
                 var protocol = (res.data.protocol)? res.data.protocol : "http";
 
-                $http({
-                    method: "GET",
-                    url: "getpage?url="+urlencode(protocol+"://"+res.data.domain)+"&"+time+"&insp=false",
-                }).then(function(res){
-                    var links = [];
-
-                    res.data.replace(/<a\s.*href=[\'"]?([^\'" >]+)/ig, function(){ 
-                        var bruteLink = arguments[1];
-                        links.push(bruteLink);       
-                    });
-
-                    $rootScope.test.links = links;
-                });
-
+                $scope.testlinks(protocol+"://"+res.data.domain);
+                $scope.testlinkurl = protocol+"://"+res.data.domain;
                 refreshTagsInput($rootScope.data);
             }, function(res){
                 $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
@@ -78,6 +67,22 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
         }, function(res){
             $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
         });
+        
+        $scope.testlinks = function(url){
+            $http({
+                method: "GET",
+                url: "getpage?url="+urlencode(url)+"&"+time+"&insp=false",
+            }).then(function(res){
+                var links = [];
+                
+                res.data.replace(/<a\s.*?href=["\']([^"\']*)/img, function(){ 
+                    var bruteLink = arguments[1];
+                    links.push(bruteLink);       
+                });
+
+                $rootScope.test.links = links;
+            });
+        };
 
         $scope.getdata = function(){
             return $rootScope.data;
@@ -223,58 +228,87 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
 
             for(var key in $rootScope.newe.originalpreview){
                 var value = $rootScope.newe.originalpreview[key];
-
-                switch($rootScope.newe.type){
-                    case "int": 
-                        value.replace(/(\d{1,})/i, function(){ 
-                            value = parseInt(arguments[1]); 
-                        });
-                    break;
-                    case "float":
-                        value.replace(/(\d{1,}.\d{1,})/i, function(){ 
-                            value = parseFloat(arguments[1]); 
-                        });
-                    break;
-                    case "date": value = new Date(value).toDateString(); break;
-                    case "time": value = new Date(value).toTimeString(); break;
-                    case "datetime": value = new Date(value).toGMTString(); break;
-                    case "table": value = maptable(value); break;
-                    case "img": value = getattr(value, "src"); break;
-                    case "imagegallery": value = mapimages(value); break;
-                    case "currency": 
-                        switch($rootScope.newe.currencyl10n){
-                            case "en": 
-                            case "en-gb": 
-                                var mask = /[^0-9\.-]+/g; 
-                                value = parseFloat(value.replace(mask, "")); 
-                            break;
-                            case "pt-br": 
-                                var mask = /[^0-9\,-]+/g; 
-                                value = parseFloat(value.replace(mask, "").replace(",", ".")); 
-                            break;
+                
+                if(typeof $rootScope.newe.maskregex == "string" && $rootScope.newe.maskregex != "" && $rootScope.newe.maskregex != null){
+                    var reg = new RegExp($rootScope.newe.maskregex, "gmi");
+                    
+                    if(typeof value == "string"){
+                        value = value.match(reg);
+                    }
+                    else if(typeof value == "array" || typeof value == "object"){
+                        for(var key2 in value){
+                            if(typeof value[key2] == "string"){
+                                value[key2] = value[key2].match(reg);
+                            }
+                            else{
+                                for(var key3 in value[key2])
+                                    if(typeof value[key2][key3] == "string")
+                                        value[key2][key3] = value[key2][key3].match(reg);
+                            }
                         }
+                    }
+                }  
 
-                        numeral.language($rootScope.newe.currencyl10n);
-                        value = numeral(value).format('$0,0.00');
-                    break;   
-                    case "linklist": 
-                        value = maplinks(value, $rootScope.newe.linkremovequery); 
+                if(value !== null && value !== undefined){
+                    switch($rootScope.newe.type){
+                        case "int": 
+                            if(typeof value === "object" || typeof value === "array")
+                                value = value[0];
 
-                         if($rootScope.newe.linkunique && (typeof value == "object" || typeof value == "array"))
-                             value = array_unique(value);                        
-                    break;
-                    case "link":
-                        if($rootScope.newe.linkremovequery){
-                            var parse = value.split("?");
-                            value = parse[0];
-                        }
-                    break;
+                            value.replace(/(\d{1,})/i, function(){ 
+                                value = parseInt(arguments[1]); 
+                            });
+                        break;
+                        case "float":
+                            if(typeof value === "object" || typeof value === "array")
+                                value = value[0];
+
+                            value.replace(/(\d{1,}.\d{1,})/i, function(){ 
+                                value = parseFloat(arguments[1]); 
+                            });
+                        break;
+                        case "date": value = new Date(value).toDateString(); break;
+                        case "time": value = new Date(value).toTimeString(); break;
+                        case "datetime": value = new Date(value).toGMTString(); break;
+                        case "table": value = maptable(value); break;
+                        case "img": value = getattr(value, "src"); break;
+                        case "imagegallery": value = mapimages(value); break;
+                        case "currency": 
+                            switch($rootScope.newe.currencyl10n){
+                                case "en": 
+                                case "en-gb": 
+                                    var mask = /[^0-9\.-]+/g; 
+                                    value = parseFloat(value.replace(mask, "")); 
+                                break;
+                                case "pt-br": 
+                                    var mask = /[^0-9\,-]+/g; 
+                                    value = parseFloat(value.replace(mask, "").replace(",", ".")); 
+                                break;
+                            }
+
+                            numeral.language($rootScope.newe.currencyl10n);
+                            value = numeral(value).format('$0,0.00');
+                        break;   
+                        case "linklist": 
+                            value = maplinks(value, $rootScope.newe.linkremovequery); 
+
+                             if($rootScope.newe.linkunique && (typeof value == "object" || typeof value == "array"))
+                                 value = array_unique(value);                        
+                        break;
+                        case "link":
+                            if($rootScope.newe.linkremovequery){
+                                var parse = value.split("?");
+                                value = parse[0];
+                            }
+                        break;
+                    }
                 }
-
+                
                 var removehtml = (typeof $rootScope.newe.removehtml == "boolean") ? $rootScope.newe.removehtml : false;
                 var converthtmlentitiesdecode = (typeof $rootScope.newe.htmlentitiesdecode == "boolean") ? $rootScope.newe.htmlentitiesdecode : false;
                 var removelinebreakandtabs = (typeof $rootScope.newe.removelinebreakandtabs == "boolean") ? $rootScope.newe.removelinebreakandtabs : false;
-
+                var firstelement = (typeof $rootScope.newe.firstelement == "boolean") ? $rootScope.newe.firstelement : false;
+                
                 if(removehtml){
                     value = replaceInReturn(value, function(v){
                         return strip_tags(v);
@@ -292,13 +326,17 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                         return v.replace(/(\r\n|\n|\r|\t)/gm, "");
                     });
                 }
-
+                     
                 //Correção de trim
                 value = replaceInReturn(value, function(v){
                     return v.replace(/ +(?= )/g,'');
                 });            
 
-                $rootScope.newe.preview[key] = value;                
+                if((typeof value === "object" || typeof value === "number" || typeof value === "string") && value !== null && value !== undefined)
+                    if(!firstelement || ($rootScope.newe.preview.length <= 0 && firstelement))
+                        $rootScope.newe.preview[key] = value; 
+                    else
+                        break;
             }
         };
     });
@@ -354,7 +392,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
     }
     
     function parse_key(key){
-        key = utf8_encode(key);
+        //key = utf8_encode(key);
         key = removerAcentos(key);
         key = key.replace(/(\r\n|\n|\r|\t)/gm, "");//Removendo espaçamentos e tabs
         key = html_entity_decode(key);//Removendo HTML Entity
@@ -391,12 +429,10 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
             count++;
         });
 
-        $(html).find("dl").each(function(){
+        //$(html).find("dl").each(function(){
             var value = [];
 
-            //console.log($("dt", this).length);
-
-            if($("dt", this).length <= 1){
+            /*if($("dt", this).length <= 1){
                 var key = ($("dt", this).length > 0) ? $("dt", this).html().trim() : count;
 
                 if(typeof key === "string")
@@ -408,27 +444,26 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                     });
                 }     
 
-                r[key] = value;
+                r[parse_key(key)] = value;
             } 
-            else if($("dt", this).length > 1){//Casos que o programador cotoco colocou vários DT no mesmo DL
+            else if($("dt", this).length > 1){//Casos que o programador cotoco colocou vários DT no mesmo DL*/
                 var keys = [];
                 var values = [];
 
-                $("dt", this).each(function(){
+                $("dt", html).each(function(){
                     keys.push($(this).html().trim());
                 });
 
-                $("dd", this).each(function(){
+                $("dd", html).each(function(){
                     values.push($(this).html().trim());
                 });
 
-                for(var key in keys){
-                    r[parse_key(keys[key])] = values[key];
-                }            
-            }
+                for(var key in keys)
+                    r[parse_key(keys[key])] = values[key];        
+            //}
 
             count++;
-        });
+        //});
 
         return r;
     }
@@ -437,7 +472,10 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
         var r = [];
 
         $(html).find("img").each(function(){
-            r.push($(this).attr("src"));
+            var src = $(this).attr("src");
+            
+            if(src != null && src != undefined)
+                r.push();
         });
 
         return r;
@@ -454,7 +492,8 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                 href = parse[0];
             }
 
-            r.push(href);
+            if(href != null && href != undefined)
+                r.push(href);
         });
 
         return r;
@@ -763,7 +802,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                         }
                     }
                     else{
-                        if(url.search(filter) != -1){
+                        if(url.search(filter.toString()) != -1){
                             return true;
                             break;
                         }

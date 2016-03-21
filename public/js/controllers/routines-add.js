@@ -1,60 +1,48 @@
 /**
- * Mappers add controller
+ * Home controller
  */
 
 'use strict';
 
 define(['app', 'jquery', 'bootstrap'], function (app) {
-    app.controller("mappers-add", function($scope, $http, $location){
-        $scope.data = {
-            requestpersecound: 5,
-            cpuusage: 50
-        };
+    app.controller('routines-add', function ($scope, $http, $location) {
+        $http({
+            method: "GET",
+            url: "data-updaters",
+        }).then(function(res){                
+            if(res.data.error)
+                $scope.error = res.data.error;
+            else
+                $scope.updaters = res.data;
+        }, function(res){
+            $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
+        });
         
-        refreshTagsInput();
-
         $http({
             method: "GET",
-            url: "filters-list",
-        }).then(function(res){
+            url: "data-mappers",
+        }).then(function(res){                
             if(res.data.error)
                 $scope.error = res.data.error;
-            else 
-                $scope.filters = res.data;
+            else
+                $scope.mappers = res.data;
         }, function(res){
             $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
         });
-
-        $http({
-            method: "GET",
-            url: "databases-list",
-        }).then(function(res){
-            if(res.data.error)
-                $scope.error = res.data.error;
-            else 
-                $scope.databases = res.data;
-        }, function(res){
-            $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
-        });
-
+        
         $scope.add = function(){
            $http({
                 method: "POST",
-                url: "mappers-add",
+                url: "routines-add",
                 data: $scope.data
             }).then(function(res){
                 if(res.data.error)
                     $scope.error = res.data.error;
                 else
-                    $location.path("/mappers");
+                    $location.path("/routines");
             }, function(res){
                 $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
             }); 
         };
     });
-        
-    function refreshTagsInput(){      
-        if($("[data-role='tagsinput']").length > 0)
-            $("[data-role='tagsinput']").tagsinput({trimValue: false, confirmKeys: [13, 32]});
-    }
 });

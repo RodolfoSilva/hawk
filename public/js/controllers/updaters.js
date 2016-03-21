@@ -34,8 +34,12 @@ define(['app', 'socket.io', 'd3', 'jquery', 'bootstrap'], function (app, io, d3)
                         if($scope.threads[key].stats.memory != null)
                             $scope.sparkline[key]["memory"].data.push($scope.threads[key].stats.memory.heapTotal);  
 
-                        if($scope.threads[key].stats.cpu != null)
-                            $scope.sparkline[key]["cpu"].data.push($scope.threads[key].stats.cpu);
+                        if($scope.threads[key].stats.cpu != null){
+                            var maxuse = 100/$scope.threads[key].stats.cpus;
+                            var realperc = (maxuse*$scope.threads[key].stats.cpu)/100;
+                            $scope.threads[key].stats.cpu = realperc;
+                            $scope.sparkline[key]["cpu"].data.push(realperc);
+                        }
 
                         if($scope.threads[key].stats.networkusage != null)
                             $scope.sparkline[key]["network"].data.push($scope.threads[key].stats.networkusage);

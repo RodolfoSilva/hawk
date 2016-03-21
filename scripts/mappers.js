@@ -56,21 +56,7 @@ module.exports = function(dirname, settings, app, io, mongodb, debug, threads){
     
     app.post("/remove-mapper", function(req, res){
         var ObjectID = require('mongodb').ObjectID;
-        var id = new ObjectID(req.body.id);
-        
-        mongodb.collection("mappers").find({"_id": id}).toArray(function(err, result){       
-            if(typeof result[0]["pid"] == "number"){
-                setTimeout(function(){
-                    switch(process.platform){
-                        case "win32": cp.exec("TASKKILL /F /PID "+result[0].pid); break;
-                        case "linux": cp.exec("kill "+result[0].pid); break;
-                    }    
-                }, 2000); 
-
-                stopFork = true;
-            }
-        });
-         
+        var id = new ObjectID(req.body.id);         
         mongodb.collection("mappers").deleteOne({"_id": id}, function(err, result){});
         
         sendStats();
@@ -97,8 +83,8 @@ module.exports = function(dirname, settings, app, io, mongodb, debug, threads){
     app.post("/get-to-database", function(req, res){
         var collection = req.body.collection;
         var filters = (req.body.filters) ? req.body.filters : {};
-        var pg = (req.body.page > 0) ? req.body.page : 0;
-        var offset = pg*10;
+        var pg = (req.body.page > 0) ? req.body.page : 1;
+        var offset = (pg*10)-10;
         
         mongodb.collection(collection).count(filters, function(error, numOfDocs){
             if(error){
@@ -109,7 +95,7 @@ module.exports = function(dirname, settings, app, io, mongodb, debug, threads){
                     if(error)
                         res.send({error: error});
                     else
-                        res.send({docs: docs, total: numOfDocs});
+                        res.send({docs: docs, total: numOfDocs-1});
                 });
             }
         });
@@ -139,7 +125,10 @@ module.exports = function(dirname, settings, app, io, mongodb, debug, threads){
 
         thread.on('message', function(data){
             switch(data.type){
-                case "stats": mongodb.collection("mappers").update({"_id": id}, {$set: {"pid": thread.pid, "stats": data}}, function(err, result){}); break;
+                case "stats": 
+                    data["cpus"] = require('os').cpus().length;                    
+                    mongodb.collection("mappers").update({"_id": id}, {$set: {"pid": thread.pid, "stats": data}}, function(err, result){}); 
+                break;
                 case "error": io.emit("error", data.msg); break;
                 case "end": stopFork = true; break;
             }

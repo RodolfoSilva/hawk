@@ -85,7 +85,7 @@ module.exports = function(dirname, settings, app, io, mongodb, debug){
         request.get(req.query.url)
         .set('Accept-Encoding', 'gzip')
         .redirects(1)
-        .on('error', function(err, res){
+        .on('error', function(err, page){
             res.send(JSON.stringify({error: err}));
         })
         .end(function(err, page){
@@ -132,7 +132,7 @@ module.exports = function(dirname, settings, app, io, mongodb, debug){
                                      <div class="DomInsp_dropMenu">\
                                        <ul>\
                                            <li class="DomInspCopyvalue"><a href="javascript:DomInspCopyvalue();"><i class="fa fa-align-left"></i> &nbsp; Copiar</a></li>\
-                                           <li class="DomInspIngored"><a href="javascript:DomInspIngored();"><i class="fa fa-ban"></i> &nbsp; Ignorar</a></li>\
+                                           <!--<li class="DomInspIngored"><a href="javascript:DomInspIngored();"><i class="fa fa-ban"></i> &nbsp; Ignorar</a></li>-->\
                                            <li class="DomInspGo"><a href="javascript:DomInspGo();"><i class="fa fa-arrow-right"></i> &nbsp; Ir ao link</a></li>\
                                        </ul>\
                                    </div>');
