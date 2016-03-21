@@ -19,10 +19,14 @@ var fs = require("fs"),
     cheerio = require("cheerio"),
     php = require("phpjs"),
     _ = require("lodash"),
+    async = require("async"),
     exec = require('child_process').exec,
     extractor = require("./extractor.js");
     
-//process.on('uncaughtException', function(err){ console.log(err); });
+process.on('uncaughtException', function(err){ 
+    console.log(err); 
+    HawkMapper.init();
+});
     
 var cpuusage = 0;
 var settings, filter = null;
@@ -234,7 +238,7 @@ var HawkMapper = {
         var now = new Date().getTime();
         HawkMapper.db.collection("links_"+settings.namespace).count({queued: true, verified: false, queued_timeout: {$lt : now}},function(error, numOfDocs){
             if(numOfDocs > 0){
-                HawkMapper.db.collection("links_"+settings.namespace).update({queued: true, verified: false, queued_timeout: {$lt : now}}, {$set: {queued: false}}, function(){});
+                HawkMapper.db.collection("links_"+settings.namespace).update({queued: true, verified: false, queued_timeout: {$lt : now}}, {$set: {queued: false}}, { multi: true }, function(){});
             }
         });
     },
@@ -263,75 +267,88 @@ var HawkMapper = {
      * Solicita lote de links da base de dados
      * @return void
      */
-    getLinksLot: function(){    
-        //Enviando pacote de links verificados
-        if(arrLinkVerified.length > 0){
-            var now = new Date().getTime();
-            var bulkLinkVerified = HawkMapper.db.collection("links_"+settings.namespace).initializeUnorderedBulkOp({useLegacyOps: true});
-            
-            for(var key in arrLinkVerified){
-                bulkLinkVerified.find({"_id": arrLinkVerified[key]}).update({$set: {"queued": true, "verified": true, "verified_datetime": now}});
-            }
-            
-            bulkLinkVerified.execute(function(err, result) {});
-            arrLinkVerified = [];
-        }
+    getLinksLot: function(){   
+        HawkMapper.inprogress = true;
         
-        //Enviando pacote de dados extraidos
-        if(arrExtractions.length > 0){
-            var bulkExtractions = HawkMapper.db.collection("extractions_"+settings.namespace).initializeUnorderedBulkOp({useLegacyOps: true});
-            
-            for(var key in arrExtractions){
-                bulkExtractions.insert(arrExtractions[key]);
-            }
-            
-            bulkExtractions.execute(function(err, result) {});
-            arrExtractions = [];
-        }
-        
-        //Enviando pacote de links coletados
-        if(arrLink.length > 0){
-            var bulkLink = HawkMapper.db.collection("links_"+settings.namespace).initializeUnorderedBulkOp({useLegacyOps: true});
-            
-            for(var key in arrLink){
-                bulkLink.insert(arrLink[key]);
-            }
-            
-            bulkLink.execute(function(err, result) {});
-            arrLink = [];
-        }
-        
-        global.gc();
-        
-        switch(settings.database.type){
-           case "mongodb": 
-                HawkMapper.db.collection("links_"+settings.namespace).find({"queued": false, "verified": false}, {"_id": 1, "link": 1}, {limit: 100, sort: {"priority": -1}}).toArray(function(err, docs){
-                   var now = new Date().getTime();
-                   if(err){ 
-                       HawkMapper.db.collection("links_"+settings.namespace+"_logs").insertOne({"datetime": now, "error": "MongoDB: "+ err});
-                       HawkMapper.inprogress = false;
-                   }
-                   else{
-                        if(docs.length > 0){
-                            var now = new Date().getTime();
-                            var bulkQueued = HawkMapper.db.collection("links_"+settings.namespace).initializeUnorderedBulkOp({useLegacyOps: true});
+        async.series([
+            function(next){//Enviando pacote de links verificados
+                if(arrLinkVerified.length > 0){
+                    var now = new Date().getTime();
+                    var bulkLinkVerified = HawkMapper.db.collection("links_"+settings.namespace).initializeUnorderedBulkOp();
 
-                            for(var key in docs){
-                                 bulkQueued.find({"_id": docs[key]["_id"]}).update({$set: {"queued": true, "queued_timeout": now}});
-                             }
+                    for(var key in arrLinkVerified){
+                        bulkLinkVerified.find({"_id": arrLinkVerified[key]}).update({$set: {"queued": true, "verified": true, "verified_datetime": now}});
+                    }
 
-                             bulkQueued.execute(function(err, result) {});
+                    bulkLinkVerified.execute(function(err, result) { next(); });
+                    arrLinkVerified = [];
+                }
+                else{
+                    next();
+                }
+            },
+            function(next){//Enviando pacote de dados extraidos
+                if(arrExtractions.length > 0){
+                    var bulkExtractions = HawkMapper.db.collection("extractions_"+settings.namespace).initializeUnorderedBulkOp();
 
-                            HawkMapper.inprogress = true;
-                            HawkMapper.requests(docs);
-                        }
-                        else{
-                            HawkMapper.inprogress = false;
-                        }
-                   }
-                });
-           break;
-        }
+                    for(var key in arrExtractions){
+                        bulkExtractions.insert(arrExtractions[key]);
+                    }
+
+                    bulkExtractions.execute(function(err, result) { next(); });
+                    arrExtractions = [];
+                }
+                else{
+                    next();
+                }
+            },
+            function(next){//Enviando pacote de links coletados
+                if(arrLink.length > 0){
+                    var bulkLink = HawkMapper.db.collection("links_"+settings.namespace).initializeUnorderedBulkOp();
+
+                    for(var key in arrLink){
+                        bulkLink.insert(arrLink[key]);
+                    }
+
+                    bulkLink.execute(function(err, result) { next(); });
+                    arrLink = [];
+                }
+                else{
+                    next();
+                }
+            }
+        ], function(){
+            global.gc();
+        
+            switch(settings.database.type){
+               case "mongodb": 
+                    HawkMapper.db.collection("links_"+settings.namespace).find({"queued": false, "verified": false}, {"_id": 1, "link": 1}, {limit: 100, sort: {"priority": -1}}).toArray(function(err, docs){
+                       var now = new Date().getTime();
+                       if(err){ 
+                           HawkMapper.db.collection("links_"+settings.namespace+"_logs").insertOne({"datetime": now, "error": "MongoDB: "+ err});
+                           HawkMapper.inprogress = false;
+                       }
+                       else{
+                            if(docs.length > 0){
+                                var now = new Date().getTime();
+                                var bulkQueued = HawkMapper.db.collection("links_"+settings.namespace).initializeUnorderedBulkOp();
+
+                                for(var key in docs)
+                                     bulkQueued.find({"_id": docs[key]["_id"]}).update({$set: {"queued": true, "queued_timeout": now+120000}});
+
+                                bulkQueued.execute(function(err, result) {});
+
+                                HawkMapper.inprogress = true;
+                                HawkMapper.requests(docs);
+                            }
+                            else{
+                                HawkMapper.inprogress = false;
+                            }
+                       }
+                    });
+               break;
+            }
+        });        
     },
     
     /**
@@ -529,8 +546,7 @@ var HawkMapper = {
                                     progress++;
                                 
                                     if(res.status === 200){   
-                                        var contents = res.body.toString();
-                                        networkUsage += contents.length;
+                                        networkUsage += res.text.length;
                                         var protocol = (filter.protocol == undefined || filter.protocol == "undefined" || filter.protocol == "") ? "http" : filter.protocol;
                                         var absolteUrl = protocol+"://"+filter.domain;
 
@@ -538,7 +554,7 @@ var HawkMapper = {
 
                                         if(extractLink){
                                             //console.log("Extraindo: "+link);
-                                            var $ = cheerio.load(contents);
+                                            var $ = cheerio.load(res.text);
                                             var newextration = extractor($, filter, false);
 
                                             if(newextration != null){
@@ -546,7 +562,11 @@ var HawkMapper = {
                                                 newextration["link"] = link;
                                                 newextration["createat"] = now;
                                                 arrExtractions.push(newextration);   
-                                            }                                            
+                                            }       
+                                            else{
+                                                stats.extractionerror++;
+                                                HawkMapper.db.collection("extractions_"+settings.namespace+"_logs").insertOne({"datetime": now, "link": link});
+                                            }
 
                                             //global.gc();
                                         }
@@ -577,8 +597,8 @@ var HawkMapper = {
                                                 var removehash = bruteLink.split("#");//Evitando links que tenham conteúdo após #
                                                 bruteLink = removehash[0];
 
-                                                var removesearchexception = HawkMapper.infilter(newlink, filter.exceptionremovesearch, filter.exceptionremovesearchregex);
-
+                                                var removesearchexception = HawkMapper.infilter(bruteLink, filter.exceptionremovesearch, filter.exceptionremovesearchregex);
+                                                //console.log(removesearchexception+" - "+bruteLink);
                                                 if(filter.removesearch && !removesearchexception){
                                                     var removequery = bruteLink.split("?");//Evitando links que tenham conteúdo após #
                                                     bruteLink = removequery[0];
@@ -589,12 +609,11 @@ var HawkMapper = {
                                                 var priority = HawkMapper.infilter(newlink, filter.urlpriority, filter.urlpriorityregex);
                                                 var ignore = HawkMapper.infilter(newlink, filter.urlignore, filter.urlignoreregex);
                                                 var extractLink = HawkMapper.infilter(newlink, filter.extrationfilter);
-
+                                                                                                
                                                 if(filter.urlfilter == undefined || filter.urlfilter == "" || urlfilter){
-                                                    if(!ignore && filter.urlignore != undefined){
-                                                        if(!priority && !extractLink){
+                                                    if(!ignore && filter.urlignore != undefined){                                                        
+                                                        if(!priority && !extractLink)
                                                             newlink = HawkMapper.patternlink(newlink, filter.urlpatterns, filter.urlpatternsonly);
-                                                        }
 
                                                         if(newlink != null){
                                                             //console.log(Math.abs(crc32.str(newlink))+" - "+newlink);
