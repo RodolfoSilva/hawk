@@ -475,7 +475,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
             var src = $(this).attr("src");
             
             if(src != null && src != undefined)
-                r.push();
+                r.push(src);
         });
 
         return r;
