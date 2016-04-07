@@ -1,6 +1,6 @@
 {
     "name": "HawkWebcrawler",
-    "version": "0.8.4",
+    "version": "0.8.5",
     "description": "Simple, fast webcrawler",
     "keywords": ["hawk", "webcrawler, fast", "simple"],
     "homepage": "http://hawkwebcrawler.com",
