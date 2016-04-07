@@ -1,15 +1,22 @@
 {
-    "name": "HawkWebcrawler",
+    "name": "hawk-webcrawler",
     "version": "0.8.5",
     "description": "Simple, fast webcrawler",
     "keywords": ["hawk", "webcrawler, fast", "simple"],
     "homepage": "http://hawkwebcrawler.com",
-    "private": true,
     "author": "André Ferreira <andrehrf@gmail.com>",
     "engines" : { "node" : ">=5.0.0" }, 
     "scripts": {
         "start": "node --harmony --expose-gc"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/andrehrf/hawk"
+    },
+    "bugs": {
+        "url": "https://github.com/andrehrf/hawk/issues"
+    },
+    "homepage": "https://github.com/andrehrf/hawk",
     "dependencies": {
         "async": "^1.5.2",
         "optimist": "^0.6.1",
@@ -35,7 +42,8 @@
         "lodash": "^4.6.1",
         "cron-parser": "^1.1.0",
         "node-linux": "^0.1.7",
-        "usage": "^0.7.1"
+        "usage": "^0.7.1",
+        "horus-client": "^0.0.1"
     },
     "devDependencies": {
         "browser-sync": "^2.11.1",
