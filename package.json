@@ -4,6 +4,7 @@
     "description": "Simple, fast webcrawler",
     "keywords": ["hawk", "webcrawler, fast", "simple"],
     "homepage": "http://hawkwebcrawler.com",
+    "private": true,
     "author": "André Ferreira <andrehrf@gmail.com>",
     "engines" : { "node" : ">=5.0.0" }, 
     "scripts": {

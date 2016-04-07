@@ -1,6 +1,7 @@
 /**
  * Main File Application
  * 
+ * @use node --expose-gc --max-old-space-size=1024 --harmony app.js 
  * @author André Ferreira <andrehrf@gmail.com>
  * @license MIT
  */

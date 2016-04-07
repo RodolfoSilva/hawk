@@ -35,6 +35,8 @@ node_modules
 # Key 
 .pem
 
-# Hawk Private Files
-original
-fonts
+# Dumps
+dump
+
+#Filters
+filters/*.json

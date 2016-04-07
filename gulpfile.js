@@ -10,8 +10,7 @@ var argv = require('optimist').argv,
     gulp = require("gulp"),
     nodemon = require("gulp-nodemon"),
     browserSync = require("browser-sync");
-    
-    
+        
 var portApp = (typeof argv.port == "number") ? argv.port : 5801;
 var portBrowserSync = (typeof argv.portsync == "number") ? argv.port : 5802;
     
@@ -33,6 +32,6 @@ gulp.task("nodemon", function(){
         ignore: ["public/*"],
         env: { 'NODE_ENV': 'development' },
         args: ["--port="+portApp],
-        exec: "node --harmony --expose-gc"
+        exec: "node --harmony --expose-gc --max-old-space-size=1024"
     }).on("start");
 });
