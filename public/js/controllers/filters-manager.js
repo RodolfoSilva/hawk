@@ -4,8 +4,8 @@
 
 'use strict';
 
-define(['app', 'jquery', 'bootstrap'], function (app) {
-    app.controller("filters-manager", function($scope, $rootScope, $http, $location, ngProgressFactory){
+define(['app', 'jquery', 'bootstrap', 'services/FilterService'], function (app) {
+    app.controller("filters-manager", function($scope, $rootScope, $http, $location, FilterService, ngProgressFactory){
         $scope.progressbar = ngProgressFactory.createInstance();
         $rootScope.test = {links: []};
 
@@ -21,24 +21,22 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
             var time = new Date().getTime();
             $scope.progressbar.start();
             
-            $http({
-                method: "GET",
-                url: "data-filter?path="+query.path+"&"+time,
-            }).then(function(res){
+            FilterService.get(query.namespace)
+              .then(function(res){
                 $scope.progressbar.complete();
 
-                if(res.data.error)
-                    $scope.error = res.data.error;
-                else 
-                    $rootScope.data = res.data;
+                if(res.error)
+                    $scope.error = res.error;
+                else
+                    $rootScope.data = res;
 
                 if(typeof $rootScope.data.extracts != "object")
                     $rootScope.data.extracts = [];
 
-                var protocol = (res.data.protocol)? res.data.protocol : "http";
+                var protocol = (res.protocol)? res.protocol : "http";
 
-                $scope.testlinks(protocol+"://"+res.data.domain);
-                $scope.testlinkurl = protocol+"://"+res.data.domain;
+                $scope.testlinks(protocol+"://"+res.domain);
+                $scope.testlinkurl = protocol+"://"+res.domain;
                 refreshTagsInput($rootScope.data);
             }, function(res){
                 $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
@@ -62,22 +60,22 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
 
             if(res.data.error)
                 $scope.error = res.data.error;
-            else 
+            else
                 $rootScope.autocomplete = autocomplete;
         }, function(res){
             $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
         });
-        
+
         $scope.testlinks = function(url){
             $http({
                 method: "GET",
                 url: "getpage?url="+urlencode(url)+"&"+time+"&insp=false",
             }).then(function(res){
                 var links = [];
-                
-                res.data.replace(/<a\s.*?href=["\']([^"\']*)/img, function(){ 
+
+                res.data.replace(/<a\s.*?href=["\']([^"\']*)/img, function(){
                     var bruteLink = arguments[1];
-                    links.push(bruteLink);       
+                    links.push(bruteLink);
                 });
 
                 $rootScope.test.links = links;
@@ -90,21 +88,17 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
 
         $scope.enviar = function(){
             //$scope.progressbar.start();
-
-            $http({
-                method: "POST",
-                url: "filter-save",
-                data: $rootScope.data
-            }).then(function(res){
+            FilterService.save($rootScope.data)
+              .then(function(res){
                 //$scope.progressbar.complete();
 
-                if(res.data.error)
-                    $scope.error = res.data.error;
+                if(res.error)
+                  $scope.error = res.error;
                 else
-                    $location.path("/filters");
-            }, function(res){
+                  $location.path("/filters");
+              }, function(res){
                 $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
-            });
+              });
         };
 
         $rootScope.changeurl = function(){
@@ -134,7 +128,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
             if(parseHref.host == $rootScope.data.domain || parseHref.host == "www."+$rootScope.data.domain){
                 url = removerAcentos(url);
                 var removehash = url.split("#");//Evitando links que tenham conteúdo após #
-                url = removehash[0];     
+                url = removehash[0];
 
                 var removesearchexception = infilter(url, $rootScope.data.exceptionremovesearch, $rootScope.data.exceptionremovesearchregex);
 
@@ -163,16 +157,16 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                 }
                 else{
                     return "<span class='red'>Não está no filtro de url</span>";
-                }            
+                }
             }
             else{
                 return "<span class='red'>Não é um link do dominio</span>";
-            }        
+            }
         };
 
         $rootScope.browser = {url: ""};
     });
-    
+
     app.controller("newextraction", function($scope, $rootScope, ngProgressFactory){
         $rootScope.newe = {};
         $scope.datenow = Date.now();
@@ -228,10 +222,10 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
 
             for(var key in $rootScope.newe.originalpreview){
                 var value = $rootScope.newe.originalpreview[key];
-                
+
                 if(typeof $rootScope.newe.maskregex == "string" && $rootScope.newe.maskregex != "" && $rootScope.newe.maskregex != null){
                     var reg = new RegExp($rootScope.newe.maskregex, "gmi");
-                    
+
                     if(typeof value == "string"){
                         value = value.match(reg);
                     }
@@ -247,24 +241,24 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                             }
                         }
                     }
-                }  
+                }
 
                 if(value !== null && value !== undefined){
                     switch($rootScope.newe.type){
-                        case "int": 
+                        case "int":
                             if(typeof value === "object" || typeof value === "array")
                                 value = value[0];
 
-                            value.replace(/(\d{1,})/i, function(){ 
-                                value = parseInt(arguments[1]); 
+                            value.replace(/(\d{1,})/i, function(){
+                                value = parseInt(arguments[1]);
                             });
                         break;
                         case "float":
                             if(typeof value === "object" || typeof value === "array")
                                 value = value[0];
 
-                            value.replace(/(\d{1,}.\d{1,})/i, function(){ 
-                                value = parseFloat(arguments[1]); 
+                            value.replace(/(\d{1,}.\d{1,})/i, function(){
+                                value = parseFloat(arguments[1]);
                             });
                         break;
                         case "date": value = new Date(value).toDateString(); break;
@@ -273,27 +267,27 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                         case "table": value = maptable(value); break;
                         case "img": value = getattr(value, "src"); break;
                         case "imagegallery": value = mapimages(value); break;
-                        case "currency": 
+                        case "currency":
                             switch($rootScope.newe.currencyl10n){
-                                case "en": 
-                                case "en-gb": 
-                                    var mask = /[^0-9\.-]+/g; 
-                                    value = parseFloat(value.replace(mask, "")); 
+                                case "en":
+                                case "en-gb":
+                                    var mask = /[^0-9\.-]+/g;
+                                    value = parseFloat(value.replace(mask, ""));
                                 break;
-                                case "pt-br": 
-                                    var mask = /[^0-9\,-]+/g; 
-                                    value = parseFloat(value.replace(mask, "").replace(",", ".")); 
+                                case "pt-br":
+                                    var mask = /[^0-9\,-]+/g;
+                                    value = parseFloat(value.replace(mask, "").replace(",", "."));
                                 break;
                             }
 
                             numeral.language($rootScope.newe.currencyl10n);
                             value = numeral(value).format('$0,0.00');
-                        break;   
-                        case "linklist": 
-                            value = maplinks(value, $rootScope.newe.linkremovequery); 
+                        break;
+                        case "linklist":
+                            value = maplinks(value, $rootScope.newe.linkremovequery);
 
                              if($rootScope.newe.linkunique && (typeof value == "object" || typeof value == "array"))
-                                 value = array_unique(value);                        
+                                 value = array_unique(value);
                         break;
                         case "link":
                             if($rootScope.newe.linkremovequery){
@@ -303,16 +297,16 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                         break;
                     }
                 }
-                
+
                 var removehtml = (typeof $rootScope.newe.removehtml == "boolean") ? $rootScope.newe.removehtml : false;
                 var converthtmlentitiesdecode = (typeof $rootScope.newe.htmlentitiesdecode == "boolean") ? $rootScope.newe.htmlentitiesdecode : false;
                 var removelinebreakandtabs = (typeof $rootScope.newe.removelinebreakandtabs == "boolean") ? $rootScope.newe.removelinebreakandtabs : false;
                 var firstelement = (typeof $rootScope.newe.firstelement == "boolean") ? $rootScope.newe.firstelement : false;
-                
+
                 if(removehtml){
                     value = replaceInReturn(value, function(v){
                         return strip_tags(v);
-                    }); 
+                    });
                 }
 
                 if(converthtmlentitiesdecode){
@@ -326,21 +320,21 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                         return v.replace(/(\r\n|\n|\r|\t)/gm, "");
                     });
                 }
-                     
+
                 //Correção de trim
                 value = replaceInReturn(value, function(v){
                     return v.replace(/ +(?= )/g,'');
-                });            
+                });
 
                 if((typeof value === "object" || typeof value === "number" || typeof value === "string") && value !== null && value !== undefined)
                     if(!firstelement || ($rootScope.newe.preview.length <= 0 && firstelement))
-                        $rootScope.newe.preview[key] = value; 
+                        $rootScope.newe.preview[key] = value;
                     else
                         break;
             }
         };
     });
-    
+
     function openModalExtraction(){
         $("#newextraction").modal("show");
     }
@@ -348,7 +342,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
     function closeModalExtraction(){
         $("#newextraction").modal("hide");
     }
-    
+
     function replaceInReturn(value, cb){
         if(typeof value == "string"){
             value = cb(value);
@@ -368,8 +362,8 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
 
         return value;
     }
-    
-    function refreshTagsInput(data){      
+
+    function refreshTagsInput(data){
         var filter = data;
 
         if($("[data-role='tagsinput']").length > 0){
@@ -390,7 +384,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
             });
         }
     }
-    
+
     function parse_key(key){
         //key = utf8_encode(key);
         key = removerAcentos(key);
@@ -442,10 +436,10 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                     $("dd", this).each(function(){
                         value.push($(this).html().trim());
                     });
-                }     
+                }
 
                 r[parse_key(key)] = value;
-            } 
+            }
             else if($("dt", this).length > 1){//Casos que o programador cotoco colocou vários DT no mesmo DL*/
                 var keys = [];
                 var values = [];
@@ -459,7 +453,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                 });
 
                 for(var key in keys)
-                    r[parse_key(keys[key])] = values[key];        
+                    r[parse_key(keys[key])] = values[key];
             //}
 
             count++;
@@ -473,7 +467,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
 
         $(html).find("img").each(function(){
             var src = $(this).attr("src");
-            
+
             if(src != null && src != undefined)
                 r.push(src);
         });
@@ -867,7 +861,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
             }
 
             return (mask[dec.toLowerCase()] != undefined && mask[dec.toLowerCase()] != "undefined") ? mask[dec.toLowerCase()] : "&"+dec+";";
-        });    
+        });
 
         return strToReplace;
     }

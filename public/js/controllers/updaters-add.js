@@ -4,25 +4,23 @@
 
 'use strict';
 
-define(['app', 'jquery', 'bootstrap'], function (app) {
-    app.controller("updaters-add", function($scope, $http, $location){
+define(['app', 'jquery', 'bootstrap', 'services/FilterService'], function (app) {
+    app.controller("updaters-add", function($scope, $http, $location, FilterService){
         $scope.data = {
             requestpersecound: 5,
             cpuusage: 50,
             extractions: {}
         };
 
-        $http({
-            method: "GET",
-            url: "filters-list",
-        }).then(function(res){
-            if(res.data.error)
-                $scope.error = res.data.error;
-            else 
-                $scope.filters = res.data;
-        }, function(res){
-            $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
-        });
+        FilterService.list()
+          .then(function(res){
+            if(res.error)
+                $scope.error = res.error;
+            else
+                $scope.filters = res;
+          }, function(res){
+              $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
+          });
 
         $http({
             method: "GET",
@@ -30,7 +28,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
         }).then(function(res){
             if(res.data.error)
                 $scope.error = res.data.error;
-            else 
+            else
                 $scope.databases = res.data;
         }, function(res){
             $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
@@ -48,9 +46,9 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
                     $location.path("/updaters");
             }, function(res){
                 $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
-            }); 
+            });
         };
-        
+
         $scope.getfilter = function(){
             $http({
                 method: "POST",
@@ -59,7 +57,7 @@ define(['app', 'jquery', 'bootstrap'], function (app) {
             }).then(function(res){
                 if(res.data.error)
                     $scope.error = res.data.error;
-                else 
+                else
                     $scope.filter = res.data;
             }, function(res){
                 $scope.error = "Fails when trying to get data from the server Please try again or contact support.";

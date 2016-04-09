@@ -88,7 +88,7 @@ else{*/
             }
         });
 
-        app.use(require('./app/routes'));
+        app.use('/api/v1', require('./app/routes'));
 
         var port = (typeof argv.port === "number") ? argv.port : settings.port;
 
