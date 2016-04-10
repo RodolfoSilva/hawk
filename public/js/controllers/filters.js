@@ -4,45 +4,56 @@
 
 'use strict';
 
-define(['app', 'jquery', 'bootstrap'], function (app) {
-    app.controller("filters", function($scope, $rootScope, $http, ngProgressFactory){
+define(['app', 'jquery', 'bootstrap', 'services/FilterService'], function (app) {
+    app.controller("filters", function($scope, $rootScope, $http, FilterService, ngProgressFactory){
         $scope.progressbar = ngProgressFactory.createInstance();
+        function loadFilters() {
+          FilterService.list()
+            .then(function(res){
+              if(res.error)
+                  $scope.error = res.error;
+              else
+                  $scope.filters = res;
+            }, function(res){
+                $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
+            });
+        }
+        loadFilters();
 
-        $http({
-            method: "GET",
-            url: "data-filters",
-        }).then(function(res){            
-            if(res.data.error)
-                $scope.error = res.data.error;
-            else 
-                $scope.filters = res.data;
-        }, function(res){
-            $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
-        });
+        $rootScope.remove = function(filter){
+          FilterService.remove(filter.namespace)
+            .then(function(res){
+              if(res.error)
+                $scope.error = res.error;
+              else
+                $scope.filters = res;
+            }, function(res){
+                $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
+            });
+          loadFilters();
+        };
 
         $rootScope.setfitler = function(filter){
             $rootScope.test.filter = filter;
         };
     });
-    
-    app.controller("testfilter", function($scope, $rootScope, $http, $location, ngProgressFactory){
-        $rootScope.test = function(){
-            $http({
-                method: "GET",
-                url: "filter-test?url="+urlencode($scope.test.url)+"&filter="+$rootScope.test.filter,
-            }).then(function(res){
-                $scope.progressbar.complete();
 
-                if(res.data.error)
-                    $scope.error = res.data.error;
-                else
-                    $scope.test.data = res.data;
+    app.controller("testfilter", function($scope, $rootScope, $http, $location, FilterService, ngProgressFactory){
+        $rootScope.test = function(){
+          FilterService.test($rootScope.test.filter, urlencode($scope.test.url))
+            .then(function(res){
+              $scope.progressbar.complete();
+
+              if(res.error)
+                  $scope.error = res.error;
+              else
+                  $scope.test.data = res;
             }, function(res){
                 $scope.error = "Fails when trying to get data from the server Please try again or contact support.";
             });
         };
     });
-    
+
     /**
      * @see  http://phpjs.org/functions/urlencode/
      */

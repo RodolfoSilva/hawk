@@ -1,12 +1,27 @@
 /**
  * Main File Application
- * 
- * @use node --expose-gc --max-old-space-size=1024 --harmony app.js 
+ *
+ * @use node --expose-gc --max-old-space-size=1024 --harmony app.js
  * @author André Ferreira <andrehrf@gmail.com>
  * @license MIT
  */
 
 'use strict';
+
+const config = require("./app/config");
+
+config.set('BASE_PATH', __dirname, true);
+config.set('APP_PATH', __dirname + '/app', true);
+config.set('BASE_PATH_FILTERS', __dirname + '/filters', true);
+
+var settings = require("./settings.json");
+
+for (var prop in settings) {
+  if (settings.hasOwnProperty(prop)) {
+    config.set(prop, settings[prop], true);
+  }
+}
+
 
 var fs = require("fs"),
     argv = require('optimist').argv,
@@ -22,29 +37,29 @@ var fs = require("fs"),
     async = require("async"),
     io = require("socket.io")(http),
     MongoServer = require("mongodb").MongoClient;
-    
+
 /*if(cluster.isMaster){
     var cpuCount = require('os').cpus().length;
 
     for(var i = 0; i < cpuCount; i += 1)
         cluster.fork();
-    
+
     cluster.on('exit', function (worker) {
         console.log('Worker %d died :(', worker.id);
         cluster.fork();
     });
 }
 else{*/
-    var settings = JSON.parse(fs.readFileSync(__dirname + "/settings.json"));
+
     var mongodb = null;
-    
+
     //app.use(morgan('dev'));//Enabling Express logs
     app.use(compression());//Enabling compression
     app.use(cookieParser("MyApp"));//Cookies Management
     app.use(bodyParser.urlencoded({extended: false, limit: '100mb'}));
     app.use(bodyParser.json());
     app.use(express.static("public"));
-    
+
     async.series([
         function(cb){
             //Conectando serviço MongoDB
@@ -53,12 +68,12 @@ else{*/
 
                 if(err) console.log("MongoDB: "+err);
                 else cb();
-                
+
                 //Limpando histórico dos mapeadores/atualizadores
                 var bulkMappers = db.collection("mappers").initializeUnorderedBulkOp({useLegacyOps: true});
                 bulkMappers.find({}).update({$set: {"pid": 0, "stats": null}});
                 bulkMappers.execute(function(err, result) {});
-                
+
                 var bulkUpdaters = db.collection("updaters").initializeUnorderedBulkOp({useLegacyOps: true});
                 bulkUpdaters.find({}).update({$set: {"pid": 0, "stats": null}});
                 bulkUpdaters.execute(function(err, result) {});
@@ -66,13 +81,15 @@ else{*/
         }
     ], function(){
         requireDirectory(module, "scripts/", {
-            visit: function(obj){ 
+            visit: function(obj){
                 new obj(__dirname, settings, app, io, mongodb, function(err){
                     console.log(err);
                 });
-            } 
+            }
         });
-        
+
+        app.use('/api/v1', require('./app/routes'));
+
         var port = (typeof argv.port === "number") ? argv.port : settings.port;
 
         http.listen(port, function(){

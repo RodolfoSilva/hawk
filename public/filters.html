@@ -4,7 +4,7 @@
     <div class="alert alert-danger" ng-if="error">
         {{error | json}}
     </div>
-    
+
     <div class="row">
         <div class="col-md-10">
             <ol class="breadcrumb">
@@ -16,11 +16,11 @@
             <a href="/filters-add" style="margin-bottom: 10px" class="btn btn-primary btn-block pull-right">{{lng.add}}</a>
         </div>
     </div>
-    
+
     <div ng-if="filters.length <= 0">
         <div class="alert alert-warning">{{lng.norecords}}</div>
     </div>
-    
+
     <table class="table table-bordered table-striped" ng-if="filters">
         <thead>
             <tr>
@@ -41,8 +41,8 @@
                 <td>{{filter.mtime | date:lng.formatDatetime}}</td>
                 <td>
                     <button ng-click="setfitler(filter.namespace); $event.preventDefault" type="button" class="btn btn-info" data-toggle="modal" data-target="#testfilter" uib-tooltip="{{lng.testfilter}}"><i class="fa fa-bug"></i></button>
-                    <a href="#/filters-edit/?path={{filter.path}}" class="btn btn-success" uib-tooltip="{{lng.edit}}"><i class="fa fa-pencil"></i></a>
-                    <button class="btn btn-danger" uib-tooltip="{{lng.remove}}" ng-click="remove()"><i class="fa fa-times"></i></button>
+                    <a href="#/filters-edit/?namespace={{filter.namespace}}&path={{filter.path}}" class="btn btn-success" uib-tooltip="{{lng.edit}}"><i class="fa fa-pencil"></i></a>
+                    <button class="btn btn-danger" uib-tooltip="{{lng.remove}}" ng-click="remove(filter)"><i class="fa fa-times"></i></button>
                 </td>
             </tr>
         </tbody>
