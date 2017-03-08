@@ -1,0 +1,31 @@
+version: '2'
+services:
+    mongo:
+        image: mongo:latest
+        ports:
+            - '27017:27017'
+        volumes:
+            - '/data/db'
+    hawk:
+        image: node:latest
+        restart: always
+        privileged: true
+        tty: true
+        build:
+            context: .
+            dockerfile: Dockerfile
+        environment:
+            NODE_ENV: prod
+        volumes:
+            - '.:/home/app'
+            - '/home/app/node_modules' 
+        network_mode: host
+        ports:
+            - "5800"
+        depends_on:
+            - mongo
+networks:
+    default:
+        driver: bridge
+    dockernet:
+        external: true

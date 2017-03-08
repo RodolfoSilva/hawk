@@ -1,8 +1,0 @@
-{
-  "apps" :[{
-    "script"    : "app.js",
-    "name"      : "hawk",
-    "exec_mode" : "fork",
-    "node_args" : "--harmony --expose-gc --max-old-space-size=1024"
-  }]
-}

@@ -1,13 +1,13 @@
 {
     "name": "hawk-webcrawler",
-    "version": "0.8.5",
+    "version": "0.8.6",
     "description": "Simple, fast webcrawler",
     "keywords": ["hawk", "webcrawler, fast", "simple"],
-    "homepage": "http://hawkwebcrawler.com",
+    "homepage": "https://github.com/andrehrf/hawk",
     "author": "André Ferreira <andrehrf@gmail.com>",
-    "engines" : { "node" : ">=5.0.0" }, 
+    "engines" : { "node" : ">=6.0.0" }, 
     "scripts": {
-        "start": "node --harmony --expose-gc"
+        "start": "node --expose-gc app.js"
     },
     "repository": {
         "type": "git",
