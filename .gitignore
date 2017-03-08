@@ -40,3 +40,4 @@ dump
 
 #Filters
 filters/*.json
+/nbproject/private/
